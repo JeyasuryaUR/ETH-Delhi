@@ -1,12 +1,17 @@
-import express, { Application } from 'express';
-import routes from './routes';
+import express from 'express';
+import userRoutes from './routes/userRoutes';
 
-const app: Application = express();
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
 
-// Routes
-app.use('/api', routes);
+app.use('/api/users', userRoutes);
 
-export default app;
+app.get('/', (_req, res) => {
+  res.send('Hello, world!');
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
