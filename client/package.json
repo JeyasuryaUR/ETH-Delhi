@@ -13,6 +13,8 @@
     "@dynamic-labs/wagmi-connector": "^4.32.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.2",
+    "@types/chess.js": "^0.13.7",
+    "chess.js": "^1.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.22",
@@ -21,6 +23,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
     "viem": "^2.37.8",
     "wagmi": "^2.17.5"
