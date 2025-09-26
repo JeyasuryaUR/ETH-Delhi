@@ -39,17 +39,18 @@ const WalletRedirectHandler = ({ children }: { children: ReactNode }) => {
 const NavContent = () => {
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90vw] md:max-w-5xl px-4 md:px-6 py-3 flex justify-between items-center bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-xl shadow-gray-300/20">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90vw] md:max-w-5xl px-4 md:px-6 py-3 flex justify-between items-center bg-white border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
       <Link href="/" className="flex items-center gap-2 md:gap-3 group">
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 font-dharma text-xl md:text-2xl font-bold tracking-wider group-hover:from-gray-700 group-hover:to-gray-500 transition-all duration-300">
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 text-xl md:text-2xl font-bold tracking-wider group-hover:from-gray-700 group-hover:to-gray-500 transition-all duration-300">
           PLAY
         </span>
       </Link>
 
       <div className="flex items-center gap-3">
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-300 to-gray-400 rounded-lg blur opacity-40 group-hover:opacity-60 transition duration-300"></div>
-          <DynamicWidget />
+          <div className="relative bg-white border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <DynamicWidget />
+          </div>
         </div>
       </div>
     </nav>
@@ -66,9 +67,9 @@ const ClientWrapper = ({ children }: { children: ReactNode }) => {
       }}
     >
       <WalletRedirectHandler>
-        <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="relative min-h-screen  bg-gradient-to-br from-gray-50 via-white to-gray-100">
           <NavContent />
-          <main className="">{children}</main>
+          <main className="pt-16" style={{ backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}>{children}</main>
         </div>
       </WalletRedirectHandler>
     </DynamicContextProvider>
