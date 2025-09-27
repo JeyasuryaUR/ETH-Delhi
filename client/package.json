@@ -17,6 +17,8 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-visually-hidden": "^1.2.3",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "9.3.0",
     "@tanstack/react-query": "^5.90.2",
     "@types/chess.js": "^0.13.7",
     "chess.js": "^1.4.0",
@@ -30,8 +32,11 @@
     "react-hot-toast": "^2.6.0",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
+    "three": "^0.180.0",
+    "three-globe": "^2.44.0",
     "viem": "^2.37.8",
-    "wagmi": "^2.17.5"
+    "wagmi": "^2.17.5",
+    "motion": "12.23.22"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
