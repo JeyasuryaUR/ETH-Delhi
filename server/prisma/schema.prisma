@@ -15,32 +15,32 @@ datasource db {
 }
 
 model users {
-  id                      String   @id @default(uuid()) @db.Uuid
-  username                String   @unique
-  display_name            String?
-  email                   String?  @unique
-  created_at              DateTime @default(now()) @db.Timestamptz(6)
-  is_active               Boolean  @default(true)
-  wallet_address          String?  @unique
-  ens_name                String?  @unique
-  ens_namehash            String?
-  ens_resolver            String?
-  ens_owner_address       String?
-  ens_registered          Boolean  @default(false)
-  ens_verified            Boolean  @default(false)
-  ens_verified_at         DateTime? @db.Timestamptz(6)
-  ens_metadata            Json?
-  rating_cached           Int      @default(1200)
-  rating_type_cached      String   @default("standard")
-  rating_cached_updated_at DateTime @default(now()) @db.Timestamptz(6)
-  metadata                Json?
+  id                       String    @id @default(uuid()) @db.Uuid
+  username                 String    @unique
+  display_name             String?
+  email                    String?   @unique
+  created_at               DateTime  @default(now()) @db.Timestamptz(6)
+  is_active                Boolean   @default(true)
+  wallet_address           String?   @unique
+  ens_name                 String?   @unique
+  ens_namehash             String?
+  ens_resolver             String?
+  ens_owner_address        String?
+  ens_registered           Boolean   @default(false)
+  ens_verified             Boolean   @default(false)
+  ens_verified_at          DateTime? @db.Timestamptz(6)
+  ens_metadata             Json?
+  rating_cached            Int       @default(1200)
+  rating_type_cached       String    @default("standard")
+  rating_cached_updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  metadata                 Json?
 
-  contests                contests[]        @relation("UserContests")
-  games_white             games[]           @relation("WhiteUser")
-  games_black             games[]           @relation("BlackUser")
-  games_won               games[]           @relation("WinnerUser")
-  participants            contest_participants[]
-  ratings_history         ratings_history[]
+  contests        contests[]             @relation("UserContests")
+  games_white     games[]                @relation("WhiteUser")
+  games_black     games[]                @relation("BlackUser")
+  games_won       games[]                @relation("WinnerUser")
+  participants    contest_participants[]
+  ratings_history ratings_history[]
 
   @@map("users")
 }
@@ -58,22 +58,22 @@ model contests {
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
   prize_pool   Int       @default(0)
 
-  organizer users? @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
+  organizer    users?                 @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
   participants contest_participants[]
-  games games[]
+  games        games[]
 
-  @@map("contests")
   @@index([status], map: "idx_contests_status")
+  @@map("contests")
 }
 
 model contest_participants {
-  id         String    @id @default(uuid()) @db.Uuid
-  contest_id String    @db.Uuid
-  user_id    String    @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  contest_id String   @db.Uuid
+  user_id    String   @db.Uuid
   seed       Int?
-  score      Decimal   @default(0)
+  score      Decimal  @default(0)
   tiebreaks  Json?
-  joined_at  DateTime  @default(now()) @db.Timestamptz(6)
+  joined_at  DateTime @default(now()) @db.Timestamptz(6)
 
   contest contests @relation(fields: [contest_id], references: [id], onDelete: Cascade)
   user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -107,18 +107,18 @@ model games {
   black_rating_after  Int?
   metadata            Json?
 
-  contest contests? @relation(fields: [contest_id], references: [id], onDelete: SetNull)
-  white   users?    @relation("WhiteUser", fields: [white_id], references: [id], onDelete: SetNull)
-  black   users?    @relation("BlackUser", fields: [black_id], references: [id], onDelete: SetNull)
-  winner  users?    @relation("WinnerUser", fields: [winner_id], references: [id], onDelete: SetNull)
-  game_moves game_moves[]
-  ratings_onchain ratings_onchain[]
+  contest             contests?             @relation(fields: [contest_id], references: [id], onDelete: SetNull)
+  white               users?                @relation("WhiteUser", fields: [white_id], references: [id], onDelete: SetNull)
+  black               users?                @relation("BlackUser", fields: [black_id], references: [id], onDelete: SetNull)
+  winner              users?                @relation("WinnerUser", fields: [winner_id], references: [id], onDelete: SetNull)
+  game_moves          game_moves[]
+  ratings_onchain     ratings_onchain[]
   rating_attestations rating_attestations[]
 
-  @@map("games")
   @@index([white_id, black_id], map: "idx_games_players")
   @@index([contest_id], map: "idx_games_contest")
   @@index([started_at(sort: Desc)], map: "idx_games_started_at")
+  @@map("games")
 }
 
 model game_moves {
@@ -144,13 +144,13 @@ model game_moves {
 }
 
 model ratings_history {
-  id           String    @id @default(uuid()) @db.Uuid
-  user_id      String    @db.Uuid
-  rating_type  String
-  rating       Int
-  source       String?
-  recorded_at  DateTime  @default(now()) @db.Timestamptz(6)
-  metadata     Json?
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  rating_type String
+  rating      Int
+  source      String?
+  recorded_at DateTime @default(now()) @db.Timestamptz(6)
+  metadata    Json?
 
   user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -159,20 +159,20 @@ model ratings_history {
 }
 
 model ratings_onchain {
-  id                String    @id @default(uuid()) @db.Uuid
-  wallet_address    String
-  rating_type       String
-  rating_value      Int
-  tx_hash           String    @unique
-  block_number      BigInt?
-  log_index         Int?
-  operator_address  String?
-  submitted_at      DateTime  @default(now()) @db.Timestamptz(6)
-  onchain_payload   Json?
-  verified          Boolean   @default(false)
-  verified_at       DateTime? @db.Timestamptz(6)
-  source_game_id    String?   @db.Uuid
-  metadata          Json?
+  id               String    @id @default(uuid()) @db.Uuid
+  wallet_address   String
+  rating_type      String
+  rating_value     Int
+  tx_hash          String    @unique
+  block_number     BigInt?
+  log_index        Int?
+  operator_address String?
+  submitted_at     DateTime  @default(now()) @db.Timestamptz(6)
+  onchain_payload  Json?
+  verified         Boolean   @default(false)
+  verified_at      DateTime? @db.Timestamptz(6)
+  source_game_id   String?   @db.Uuid
+  metadata         Json?
 
   source_game games? @relation(fields: [source_game_id], references: [id], onDelete: SetNull)
 
@@ -180,16 +180,16 @@ model ratings_onchain {
 }
 
 model rating_attestations {
-  id               String    @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
   wallet_address   String
   rating_type      String
   rating_value     Int
   signer_address   String
   signature        String
-  attested_at      DateTime  @default(now()) @db.Timestamptz(6)
-  consumed         Boolean   @default(false)
+  attested_at      DateTime @default(now()) @db.Timestamptz(6)
+  consumed         Boolean  @default(false)
   consumed_tx_hash String?
-  source_game_id   String?   @db.Uuid
+  source_game_id   String?  @db.Uuid
   metadata         Json?
 
   source_game games? @relation(fields: [source_game_id], references: [id], onDelete: SetNull)
@@ -198,29 +198,30 @@ model rating_attestations {
 }
 
 model ens_events {
-  id          String    @id @default(uuid()) @db.Uuid
-  ens_name    String
-  namehash    String?
-  event_type  String
-  tx_hash     String?
+  id           String   @id @default(uuid()) @db.Uuid
+  ens_name     String
+  namehash     String?
+  event_type   String
+  tx_hash      String?
   block_number BigInt?
-  log_index   Int?
-  payload     Json?
-  observed_at DateTime  @default(now()) @db.Timestamptz(6)
+  log_index    Int?
+  payload      Json?
+  observed_at  DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([namehash], map: "idx_ens_events_namehash")
   @@map("ens_events")
 }
 
 model ens_attestations {
-  id                   String    @id @default(uuid()) @db.Uuid
-  ens_name             String
-  wallet_address       String
-  signer_address       String
-  signature            String
-  attestation_payload  Json?
-  consumed             Boolean   @default(false)
-  consumed_tx          String?
-  created_at           DateTime  @default(now()) @db.Timestamptz(6)
+  id                  String   @id @default(uuid()) @db.Uuid
+  ens_name            String
+  wallet_address      String
+  signer_address      String
+  signature           String
+  attestation_payload Json?
+  consumed            Boolean  @default(false)
+  consumed_tx         String?
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+
   @@map("ens_attestations")
 }
