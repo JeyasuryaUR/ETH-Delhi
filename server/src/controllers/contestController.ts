@@ -238,6 +238,7 @@ export const getContestById = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             },
@@ -245,6 +246,7 @@ export const getContestById = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             },
@@ -252,6 +254,7 @@ export const getContestById = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             }
@@ -956,6 +959,7 @@ export const getTournamentRounds = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             },
@@ -963,6 +967,7 @@ export const getTournamentRounds = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             },
@@ -970,6 +975,7 @@ export const getTournamentRounds = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             }
@@ -1212,6 +1218,7 @@ export const getGameDetails = async (req: Request, res: Response) => {
           select: {
             id: true,
             username: true,
+            wallet_address: true,
             display_name: true
           }
         },

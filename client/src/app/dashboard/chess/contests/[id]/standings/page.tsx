@@ -101,7 +101,7 @@ const PodiumCard = ({
           </div>
           
           {/* Player Info */}
-          <h3 className="text-xl font-black font-retro mb-2">{player.ensAddress}</h3>
+          <h3 className="text-xs truncate ellipses tracking-tight font-black font-retro mb-2">{player.ensAddress}</h3>
           <div className="space-y-2 text-sm font-bold">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Rank:</span>
@@ -132,7 +132,7 @@ const PodiumCard = ({
 };
 
 const TopTenList = ({ standings }: { standings: ContestStanding[] }) => {
-  const topTen = standings.slice(3, 13); // Get positions 4-13 (or as many as available)
+  const topTen = standings.slice(0, 13); // Get positions 4-13 (or as many as available)
 
   if (topTen.length === 0) return null;
 
@@ -265,7 +265,7 @@ export default function ContestStandingsPage() {
   const topThree = contestData.standings.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-background">
+    <div className="pt-24 bg-gradient-to-br from-primary/5 to-background">
       <div className="py-8 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
@@ -333,8 +333,8 @@ export default function ContestStandingsPage() {
 
           {/* Podium Section */}
           {topThree.length > 0 && (
-            <div className="mb-12">
-              <div className="flex flex-col md:flex-row justify-center items-end gap-4 mb-8">
+            <div className="mb-2">
+              <div className="flex flex-col md:flex-row justify-center items-end gap-4 mb-4">
                 {topThree.length >= 2 && (
                   <PodiumCard player={topThree[1]} position="left" delay={0.2} />
                 )}

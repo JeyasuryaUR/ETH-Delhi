@@ -294,8 +294,8 @@ export default function TournamentGamePage() {
   const { game } = gameState;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-background">
-      <div className="py-8 px-6">
+    <div className="pt-24 bg-gradient-to-br from-primary/5 to-background">
+      <div className="py-4 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div

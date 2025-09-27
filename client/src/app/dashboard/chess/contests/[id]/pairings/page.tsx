@@ -170,8 +170,8 @@ export default function ContestPairingsPage() {
   const userUnfinishedGames = userGames.filter(p => !p.result);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-background">
-      <div className="py-8 px-6">
+    <div className="pt-24 bg-gradient-to-br from-primary/5 to-background">
+      <div className="py-2 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div

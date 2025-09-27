@@ -50,6 +50,7 @@ export class SwissTournamentService {
           select: {
             id: true,
             username: true,
+            wallet_address: true,
             display_name: true,
             rating_cached: true
           }
@@ -761,6 +762,7 @@ export class SwissTournamentService {
               select: {
                 id: true,
                 username: true,
+                wallet_address: true,
                 display_name: true
               }
             }
