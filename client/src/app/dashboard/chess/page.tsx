@@ -12,7 +12,7 @@ export default function ChessDashboard() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -86,7 +86,7 @@ export default function ChessDashboard() {
             <motion.div
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigateTo('/dashboard/chess/contest')}
+              onClick={() => navigateTo('/dashboard/chess/contests')}
               className="p-6 rounded-lg bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer group"
             >
               <div className="flex items-start justify-between mb-4">

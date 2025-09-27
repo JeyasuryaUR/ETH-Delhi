@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/retroui/Button';
 import { CreateTournamentDialog } from '@/components/chess/CreateTournamentDialog';
@@ -19,6 +20,7 @@ interface Tournament {
 }
 
 export default function ContestPage() {
+  const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -100,11 +102,22 @@ export default function ContestPage() {
     const isOngoing = ongoingTournaments.some(t => t.id === tournament.id);
     const prizePoolETH = formatPrizePool(tournament.prize_pool);
 
+    const handleCardClick = () => {
+      // Navigate to individual contest page
+      router.push(`/dashboard/chess/contests/${tournament.id}`);
+    };
+
+    const handleButtonClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click when button is clicked
+      handleCardClick();
+    };
+
     return (
       <motion.div
         whileHover={{ scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.98 }}
         className="relative p-6 rounded-lg bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+        onClick={handleCardClick}
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
@@ -128,12 +141,12 @@ export default function ContestPage() {
           </div>
           <div className="text-right">
             {isOngoing ? (
-              <Button size="sm" className="font-bold uppercase">
-                Join Now
+              <Button size="sm" className="font-bold uppercase" onClick={handleButtonClick}>
+                View Contest
               </Button>
             ) : (
-              <Button variant="outline" size="sm" className="font-bold uppercase">
-                Register
+              <Button variant="outline" size="sm" className="font-bold uppercase" onClick={handleButtonClick}>
+                View Contest
               </Button>
             )}
           </div>
@@ -149,7 +162,7 @@ export default function ContestPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <div className="py-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}

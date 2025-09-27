@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/retroui/Button';
 import { Input } from '@/components/retroui/Input';
 import { Label } from '@/components/retroui/Label';
 import { Checkbox } from '@/components/retroui/Checkbox';
+import { Select } from '@/components/retroui/Select';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 
 interface CreateTournamentDialogProps {
   isOpen: boolean;
@@ -14,33 +16,72 @@ interface CreateTournamentDialogProps {
   onTournamentCreated: () => void;
 }
 
+// Time control options with their categories
+const TIME_CONTROL_OPTIONS = [
+  { value: '3+2', label: '3+2', category: 'blitz' },
+  { value: '5+1', label: '5+1', category: 'blitz' },
+  { value: '10+1', label: '10+1', category: 'rapid' },
+  { value: '20+5', label: '20+5', category: 'rapid' },
+  { value: '30+30', label: '30+30', category: 'standard' },
+  { value: '1hr+30s', label: '1 hr + 30 seconds', category: 'standard' },
+] as const;
+
 interface TournamentFormData {
   title: string;
+  timeControl: string;
   startDate: string;
   endDate: string;
   prizePool: number;
+  maxParticipants: number;
+  totalRounds: number;
+  walletAddress: string;
   termsAccepted: boolean;
 }
 
 interface FormErrors {
   title?: string;
+  timeControl?: string;
   startDate?: string;
   endDate?: string;
   prizePool?: string;
+  maxParticipants?: string;
+  totalRounds?: string;
+  walletAddress?: string;
   termsAccepted?: string;
 }
 
 export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }: CreateTournamentDialogProps) {
+  const { primaryWallet } = useDynamicContext();
   const [formData, setFormData] = useState<TournamentFormData>({
     title: '',
+    timeControl: '',
     startDate: '',
     endDate: '',
     prizePool: 0,
+    maxParticipants: 32,
+    totalRounds: 7,
+    walletAddress: '',
     termsAccepted: false,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update wallet address when primaryWallet changes
+  useEffect(() => {
+    if (primaryWallet?.address) {
+      setFormData(prev => ({
+        ...prev,
+        walletAddress: primaryWallet.address
+      }));
+    }
+  }, [primaryWallet?.address]);
+
+  // Get contest type based on selected time control
+  const getContestType = (timeControl: string): string => {
+    const option = TIME_CONTROL_OPTIONS.find(opt => opt.value === timeControl);
+    return option?.category || 'standard';
+  };
 
   const handleInputChange = (field: keyof TournamentFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -55,6 +96,10 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
+    }
+
+    if (!formData.timeControl) {
+      newErrors.timeControl = 'Time control is required';
     }
 
     if (!formData.startDate) {
@@ -80,6 +125,22 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
       newErrors.prizePool = 'Prize pool must be greater than 0';
     }
 
+    if (formData.maxParticipants <= 0) {
+      newErrors.maxParticipants = 'Max participants must be greater than 0';
+    }
+
+    if (formData.totalRounds <= 0) {
+      newErrors.totalRounds = 'Total rounds must be greater than 0';
+    }
+
+    if (!primaryWallet?.address) {
+      newErrors.walletAddress = 'Please connect your wallet first';
+    } else if (!formData.walletAddress.trim()) {
+      newErrors.walletAddress = 'Wallet address is required';
+    } else if (!formData.walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      newErrors.walletAddress = 'Invalid wallet address format';
+    }
+
     if (!formData.termsAccepted) {
       newErrors.termsAccepted = 'You must accept the terms and conditions';
     }
@@ -89,11 +150,26 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
   };
 
   const handleCreateTournament = async () => {
+    // Check if wallet is connected before validation
+    if (!primaryWallet?.address) {
+      toast.error('Please connect your wallet to create a tournament', {
+        style: {
+          background: '#ff4444',
+          color: '#fff',
+          fontWeight: 'bold',
+          border: '2px solid #000',
+        },
+      });
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     
     try {
+      const contestType = getContestType(formData.timeControl);
+      
       const response = await fetch('http://localhost:8000/api/contests', {
         method: 'POST',
         headers: {
@@ -101,9 +177,16 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
         },
         body: JSON.stringify({
           title: formData.title,
-          start_at: new Date(formData.startDate).toISOString(),
-          end_at: new Date(formData.endDate).toISOString(),
-          prize_pool: formData.prizePool.toString(),
+          type: contestType,
+          timeControl: formData.timeControl,
+          startDate: new Date(formData.startDate).toISOString(),
+          endDate: new Date(formData.endDate).toISOString(),
+          prizePool: formData.prizePool.toString(),
+          settings: {
+            maxParticipants: formData.maxParticipants,
+            totalRounds: formData.totalRounds,
+            walletAddress: primaryWallet.address, // Use actual connected wallet address
+          },
           status: 'upcoming'
         }),
       });
@@ -126,9 +209,13 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
       // Reset form
       setFormData({
         title: '',
+        timeControl: '',
         startDate: '',
         endDate: '',
         prizePool: 0,
+        maxParticipants: 32,
+        totalRounds: 7,
+        walletAddress: primaryWallet?.address || '',
         termsAccepted: false,
       });
       
@@ -198,6 +285,46 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             )}
           </div>
 
+          <div>
+            <Label className="text-sm font-bold text-black uppercase mb-2">Time Control</Label>
+            <Select onValueChange={(value) => handleInputChange('timeControl', value)} value={formData.timeControl}>
+              <Select.Trigger className={`font-medium ${errors.timeControl ? 'border-red-500' : ''}`}>
+                <Select.Value placeholder="Select time control..." />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Group>
+                  <Select.Label className="text-xs font-bold text-gray-600 uppercase px-2 py-1">Blitz</Select.Label>
+                  {TIME_CONTROL_OPTIONS.filter(opt => opt.category === 'blitz').map((option) => (
+                    <Select.Item key={option.value} value={option.value} className="font-medium">
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Group>
+                <Select.Separator />
+                <Select.Group>
+                  <Select.Label className="text-xs font-bold text-gray-600 uppercase px-2 py-1">Rapid</Select.Label>
+                  {TIME_CONTROL_OPTIONS.filter(opt => opt.category === 'rapid').map((option) => (
+                    <Select.Item key={option.value} value={option.value} className="font-medium">
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Group>
+                <Select.Separator />
+                <Select.Group>
+                  <Select.Label className="text-xs font-bold text-gray-600 uppercase px-2 py-1">Standard</Select.Label>
+                  {TIME_CONTROL_OPTIONS.filter(opt => opt.category === 'standard').map((option) => (
+                    <Select.Item key={option.value} value={option.value} className="font-medium">
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Group>
+              </Select.Content>
+            </Select>
+            {errors.timeControl && (
+              <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.timeControl}</p>
+            )}
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-bold text-black uppercase mb-2">Start Date & Time</Label>
@@ -226,19 +353,74 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             </div>
           </div>
 
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <Label className="text-sm font-bold text-black uppercase mb-2">Prize Pool (ETH)</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.prizePool}
+                onChange={(e) => handleInputChange('prizePool', parseFloat(e.target.value) || 0)}
+                className={`font-medium ${errors.prizePool ? 'border-red-500' : ''}`}
+              />
+              {errors.prizePool && (
+                <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.prizePool}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm font-bold text-black uppercase mb-2">Max Participants</Label>
+              <Input
+                type="number"
+                min="2"
+                placeholder="32"
+                value={formData.maxParticipants}
+                onChange={(e) => handleInputChange('maxParticipants', parseInt(e.target.value) || 0)}
+                className={`font-medium ${errors.maxParticipants ? 'border-red-500' : ''}`}
+              />
+              {errors.maxParticipants && (
+                <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.maxParticipants}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm font-bold text-black uppercase mb-2">Total Rounds</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="7"
+                value={formData.totalRounds}
+                onChange={(e) => handleInputChange('totalRounds', parseInt(e.target.value) || 0)}
+                className={`font-medium ${errors.totalRounds ? 'border-red-500' : ''}`}
+              />
+              {errors.totalRounds && (
+                <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.totalRounds}</p>
+              )}
+            </div>
+          </div>
+
           <div>
-            <Label className="text-sm font-bold text-black uppercase mb-2">Prize Pool (ETH)</Label>
+            <Label className="text-sm font-bold text-black uppercase mb-2">Wallet Address</Label>
             <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.prizePool}
-              onChange={(e) => handleInputChange('prizePool', parseFloat(e.target.value) || 0)}
-              className={`font-medium ${errors.prizePool ? 'border-red-500' : ''}`}
+              placeholder={primaryWallet?.address ? "Wallet connected..." : "Please connect your wallet first"}
+              value={formData.walletAddress}
+              onChange={(e) => handleInputChange('walletAddress', e.target.value)}
+              className={`font-medium font-mono text-sm ${errors.walletAddress ? 'border-red-500' : ''} ${!primaryWallet?.address ? 'bg-gray-100' : 'bg-green-50'}`}
+              readOnly
             />
-            {errors.prizePool && (
-              <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.prizePool}</p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-gray-600">Prize pool will be sent to this address</p>
+              {primaryWallet?.address && (
+                <p className="text-xs text-green-600 font-bold">✓ WALLET CONNECTED</p>
+              )}
+              {!primaryWallet?.address && (
+                <p className="text-xs text-red-600 font-bold">⚠ CONNECT WALLET</p>
+              )}
+            </div>
+            {errors.walletAddress && (
+              <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.walletAddress}</p>
             )}
           </div>
 
@@ -273,10 +455,16 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
           </Button>
           <Button
             onClick={handleCreateTournament}
-            className="font-bold uppercase"
-            disabled={isSubmitting}
+            className={`font-bold uppercase ${!primaryWallet?.address ? 'bg-gray-400 hover:bg-gray-400' : ''}`}
+            disabled={isSubmitting || !primaryWallet?.address}
+            title={!primaryWallet?.address ? 'Please connect your wallet first' : ''}
           >
-            {isSubmitting ? 'Creating...' : 'Create Tournament'}
+            {isSubmitting 
+              ? 'Creating...' 
+              : !primaryWallet?.address 
+                ? 'Connect Wallet First' 
+                : 'Create Tournament'
+            }
           </Button>
         </div>
         </div>

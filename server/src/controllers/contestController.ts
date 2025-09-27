@@ -16,10 +16,10 @@ export const createContest = async (req: Request, res: Response) => {
     } = req.body ?? {};
 
     // Basic required fields check
-    if (!title || !startDate || !endDate || prizePool === undefined) {
+    if (!title || !startDate || !endDate || prizePool === undefined || !timeControl) {
       return res.status(400).json({
         success: false,
-        message: 'title, startDate, endDate, and prizePool are required',
+        message: 'title, timeControl, startDate, endDate, and prizePool are required',
       });
     }
 
@@ -78,6 +78,30 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate settings if provided
+    if (settings) {
+      if (settings.maxParticipants && settings.maxParticipants <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Max participants must be greater than 0',
+        });
+      }
+      
+      if (settings.totalRounds && settings.totalRounds <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Total rounds must be greater than 0',
+        });
+      }
+      
+      if (settings.walletAddress && !settings.walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid wallet address format',
+        });
+      }
+    }
+
     // Check if database is available
     try {
       await prisma.$connect();
@@ -89,20 +113,23 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
-    // Create contest
+    // Create contest with the new structure
     const contest = await prisma.contests.create({
       data: {
         title: String(title),
         type: String(type),
-        time_control: timeControl || null,
+        time_control: timeControl,
         start_at: start,
         end_at: end,
         organizer_id: organizerId || null,
         prize_pool: Math.round(Number(prizePool) * 100), // Convert to cents for integer storage
+        max_participants: settings?.maxParticipants || 32,
+        total_rounds: settings?.totalRounds || 7,
         settings: settings || {
           prizePool: Number(prizePool),
-          maxParticipants: 40, // Default from frontend
-          termsAccepted: true
+          maxParticipants: 32,
+          totalRounds: 7,
+          walletAddress: null
         },
         status: 'registration'
       },

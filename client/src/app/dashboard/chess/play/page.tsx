@@ -173,7 +173,7 @@ export default function ChessPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <div className="py-12 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
