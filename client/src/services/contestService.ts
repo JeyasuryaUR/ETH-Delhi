@@ -3,6 +3,8 @@
  * Provides API functions for contest-related operations
  */
 
+import { API_BASE } from "@/lib/config";
+
 // Types
 export interface ContestStanding {
   rank: number;
@@ -45,13 +47,13 @@ export interface Contest {
 }
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Fetch contest standings by contest ID
  */
 export const fetchContestStandings = async (contestId: string): Promise<ContestData> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}/standings`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}/standings`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -69,7 +71,7 @@ export const fetchContestStandings = async (contestId: string): Promise<ContestD
  * Fetch all contests
  */
 export const fetchContests = async (): Promise<Contest[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests`, {
+  const response = await fetch(`${API_BASE}/contests`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -87,7 +89,7 @@ export const fetchContests = async (): Promise<Contest[]> => {
  * Fetch a specific contest by ID
  */
 export const fetchContest = async (contestId: string): Promise<Contest> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -105,7 +107,7 @@ export const fetchContest = async (contestId: string): Promise<Contest> => {
  * Create a new contest
  */
 export const createContest = async (contestData: CreateContestRequest): Promise<Contest> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests`, {
+  const response = await fetch(`${API_BASE}/contests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -126,7 +128,7 @@ export const createContest = async (contestData: CreateContestRequest): Promise<
  * Join a contest
  */
 export const joinContest = async (contestId: string, walletAddress: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}/join`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}/join`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -145,7 +147,7 @@ export const joinContest = async (contestId: string, walletAddress: string): Pro
  * Leave a contest
  */
 export const leaveContest = async (contestId: string, walletAddress: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}/leave`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}/leave`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -173,7 +175,7 @@ export const submitGameResult = async (
     gameId: string;
   }
 ): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}/games`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}/games`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -195,7 +197,7 @@ export const fetchContestLeaderboard = async (
   contestId: string,
   limit: number = 50
 ): Promise<ContestStanding[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/contests/${contestId}/leaderboard?limit=${limit}`, {
+  const response = await fetch(`${API_BASE}/contests/${contestId}/leaderboard?limit=${limit}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -225,7 +227,7 @@ export const fetchPlayerContestStats = async (
   winRate: number;
 }> => {
   const response = await fetch(
-    `${API_BASE_URL}/api/contests/${contestId}/players/${walletAddress}/stats`,
+    `${API_BASE}/contests/${contestId}/players/${walletAddress}/stats`,
     {
       method: 'GET',
       headers: {

@@ -1,6 +1,7 @@
+import { API_BASE } from '@/lib/config';
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
+// const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api';
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +9,7 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const url = `${API_BASE_URL}/api/contests/${id}/complete-tournament`;
+    const url = `${API_BASE}/contests/${id}/complete-tournament`;
     
     const response = await fetch(url, {
       method: 'POST',
