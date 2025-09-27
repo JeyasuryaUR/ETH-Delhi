@@ -17,7 +17,9 @@ export default function Dashboard() {
   const router = useRouter();
 
   const handleGameClick = (gameId: string, active: boolean) => {
-    if (active) {
+    if (active && gameId === 'chess') {
+      router.push(`/dashboard/chess`);
+    } else if (active) {
       router.push(`/dashboard/${gameId}`);
     }
   };
