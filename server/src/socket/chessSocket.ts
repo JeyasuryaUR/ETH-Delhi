@@ -138,6 +138,16 @@ export function initializeChessSocket(io: Server) {
           return;
         }
 
+        if (!tournamentGame.white || !tournamentGame.black) {
+          socket.emit('error', { message: 'Tournament game players not properly assigned' });
+          return;
+        }
+
+        if (!tournamentGame.white.wallet_address || !tournamentGame.black.wallet_address) {
+          socket.emit('error', { message: 'Player wallet addresses not found' });
+          return;
+        }
+
         // Check if game already exists in activeGames
         let game = activeGames.get(gameId);
         
