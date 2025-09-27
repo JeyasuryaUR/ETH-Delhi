@@ -7,19 +7,21 @@ export const createContest = async (req: Request, res: Response) => {
     const {
       title,
       type = 'standard',
+      timeControl,
       startDate,
       endDate,
       prizePool,
+      maxParticipants,
+      totalRounds,
       organizerId,
-      timeControl,
       settings
     } = req.body ?? {};
 
     // Basic required fields check
-    if (!title || !startDate || !endDate || prizePool === undefined) {
+    if (!title || !startDate || !endDate || prizePool === undefined || !maxParticipants || !totalRounds) {
       return res.status(400).json({
         success: false,
-        message: 'title, startDate, endDate, and prizePool are required',
+        message: 'title, startDate, endDate, prizePool, maxParticipants, and totalRounds are required',
       });
     }
 
@@ -78,6 +80,39 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate type
+    const validTypes = ['standard', 'blitz', 'bullet'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type must be one of: standard, blitz, bullet',
+      });
+    }
+
+    // Validate maxParticipants
+    if (maxParticipants < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Max participants must be at least 2',
+      });
+    }
+
+    // Validate totalRounds
+    if (totalRounds < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Total rounds must be at least 1',
+      });
+    }
+
+    // Validate timeControl format (basic validation)
+    if (timeControl && typeof timeControl !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Time control must be a string',
+      });
+    }
+
     // Check if database is available
     try {
       await prisma.$connect();
@@ -99,9 +134,12 @@ export const createContest = async (req: Request, res: Response) => {
         end_at: end,
         organizer_id: organizerId || null,
         prize_pool: Math.round(Number(prizePool) * 100), // Convert to cents for integer storage
+        max_participants: Number(maxParticipants),
+        total_rounds: Number(totalRounds),
         settings: settings || {
           prizePool: Number(prizePool),
-          maxParticipants: 40, // Default from frontend
+          maxParticipants: Number(maxParticipants),
+          totalRounds: Number(totalRounds),
           termsAccepted: true
         },
         status: 'registration'

@@ -49,15 +49,15 @@ model contests {
   id               String    @id @default(uuid()) @db.Uuid
   title            String
   organizer_id     String?   @db.Uuid
-  type             String
-  time_control     String?
-  start_at         DateTime? @db.Timestamptz(6)
-  end_at           DateTime? @db.Timestamptz(6)
+  type             String    // "standard", "blitz", "bullet"
+  time_control     String?   // Time control as string (e.g., "10+0", "5+3", "3+2")
+  start_at         DateTime  @db.Timestamptz(6)
+  end_at           DateTime  @db.Timestamptz(6)
   settings         Json?
   status           String    @default("registration")
   created_at       DateTime  @default(now()) @db.Timestamptz(6)
-  prize_pool       Int       @default(0)
-  max_participants Int       @default(0)
+  prize_pool       Int       // Prize pool in cents (integer storage)
+  max_participants Int       // Maximum number of participants
   tournament_type  String    @default("swiss") // "swiss", "round_robin", "elimination"
   total_rounds     Int?      // Number of rounds for Swiss tournaments
   current_round    Int       @default(0) // Current round number
