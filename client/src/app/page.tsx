@@ -14,8 +14,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <section className="relative h-screen flex items-center px-4 lg:px-8 overflow-hidden bg-primary/20">
+    <div className=" bg-background ">
+      <section className="relative min-h-screen flex px-4 lg:px-8 bg-primary/20">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background" />
         <div
           className="absolute inset-0 opacity-10"
@@ -24,9 +24,9 @@ export default function HomePage() {
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <div className="grid lg:grid-cols-3 gap-8 items-center h-full">
-            <div className="lg:col-span-2 space-y-8 mt-16">
+        <div className="relative mt-20 z-10 max-w-7xl mx-auto w-full">
+          <div className="grid lg:grid-cols-3 gap-8 items-center">
+            <div className="lg:col-span-2 space-y-8 mt-8">
               <div>
                 <div className="inline-block mb-6">
                   <div className="bg-secondary text-secondary-foreground px-4 py-2 retro-border retro-shadow font-retro text-xs uppercase tracking-wider">
