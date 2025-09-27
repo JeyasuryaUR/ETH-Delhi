@@ -7,19 +7,21 @@ export const createContest = async (req: Request, res: Response) => {
     const {
       title,
       type = 'standard',
+      timeControl,
       startDate,
       endDate,
       prizePool,
-      organizerId,
-      timeControl,
+      maxParticipants,
+      totalRounds,
+      organizerWalletAddress,
       settings
     } = req.body ?? {};
 
     // Basic required fields check
-    if (!title || !startDate || !endDate || prizePool === undefined || !timeControl) {
+    if (!title || !startDate || !endDate || prizePool === undefined || !maxParticipants || !totalRounds) {
       return res.status(400).json({
         success: false,
-        message: 'title, timeControl, startDate, endDate, and prizePool are required',
+        message: 'title, startDate, endDate, prizePool, maxParticipants, and totalRounds are required',
       });
     }
 
@@ -78,28 +80,37 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate settings if provided
-    if (settings) {
-      if (settings.maxParticipants && settings.maxParticipants <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Max participants must be greater than 0',
-        });
-      }
-      
-      if (settings.totalRounds && settings.totalRounds <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Total rounds must be greater than 0',
-        });
-      }
-      
-      if (settings.walletAddress && !settings.walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid wallet address format',
-        });
-      }
+    // Validate type
+    const validTypes = ['standard', 'blitz', 'bullet'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type must be one of: standard, blitz, bullet',
+      });
+    }
+
+    // Validate maxParticipants
+    if (maxParticipants < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Max participants must be at least 2',
+      });
+    }
+
+    // Validate totalRounds
+    if (totalRounds < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Total rounds must be at least 1',
+      });
+    }
+
+    // Validate timeControl format (basic validation)
+    if (timeControl && typeof timeControl !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Time control must be a string',
+      });
     }
 
     // Check if database is available
@@ -113,7 +124,25 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
-    // Create contest with the new structure
+    // Look up organizer by wallet address if provided
+    let organizerId = null;
+    if (organizerWalletAddress) {
+      const organizer = await prisma.users.findUnique({
+        where: { wallet_address: organizerWalletAddress },
+        select: { id: true, username: true, display_name: true }
+      });
+
+      if (!organizer) {
+        return res.status(404).json({
+          success: false,
+          message: 'Organizer wallet address not found in the system',
+        });
+      }
+
+      organizerId = organizer.id;
+    }
+
+    // Create contest
     const contest = await prisma.contests.create({
       data: {
         title: String(title),
@@ -121,15 +150,15 @@ export const createContest = async (req: Request, res: Response) => {
         time_control: timeControl,
         start_at: start,
         end_at: end,
-        organizer_id: organizerId || null,
+        organizer_id: organizerId,
         prize_pool: Math.round(Number(prizePool) * 100), // Convert to cents for integer storage
-        max_participants: settings?.maxParticipants || 32,
-        total_rounds: settings?.totalRounds || 7,
+        max_participants: Number(maxParticipants),
+        total_rounds: Number(totalRounds),
         settings: settings || {
           prizePool: Number(prizePool),
-          maxParticipants: 32,
-          totalRounds: 7,
-          walletAddress: null
+          maxParticipants: Number(maxParticipants),
+          totalRounds: Number(totalRounds),
+          termsAccepted: true
         },
         status: 'registration'
       },
