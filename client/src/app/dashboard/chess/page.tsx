@@ -13,10 +13,10 @@ export default function ChessDashboard() {
 
   return (
     <div className="">
-      <div className="py-12 px-6">
+      <div className="pb-12 pt-32 px-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="mb-12 text-center">
+          <div className="flex flex-col mb-6 items-center">
             <div className="inline-flex items-center space-x-3 mb-4">
               <div className="w-12 h-12 bg-[#FFE81E] border-2 border-black rounded-lg flex items-center justify-center">
                 <span className="text-2xl">♔</span>

@@ -125,7 +125,7 @@ const NavContent = () => {
                 <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-md shadow-sm">
                   <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full"></div>
                   <span className="text-sm font-medium text-gray-800">
-                    {userData.username || userData.display_name}
+                    {userData.username}
                   </span>
                 </div>
               </div>

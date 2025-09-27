@@ -28,6 +28,7 @@ const TIME_CONTROL_OPTIONS = [
 
 interface TournamentFormData {
   title: string;
+  type: string;
   timeControl: string;
   startDate: string;
   endDate: string;
@@ -54,6 +55,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
   const { primaryWallet } = useDynamicContext();
   const [formData, setFormData] = useState<TournamentFormData>({
     title: '',
+    type: '',
     timeControl: '',
     startDate: '',
     endDate: '',
@@ -182,11 +184,9 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
           startDate: new Date(formData.startDate).toISOString(),
           endDate: new Date(formData.endDate).toISOString(),
           prizePool: formData.prizePool.toString(),
-          settings: {
-            maxParticipants: formData.maxParticipants,
-            totalRounds: formData.totalRounds,
-            walletAddress: primaryWallet.address, // Use actual connected wallet address
-          },
+          maxParticipants: formData.maxParticipants,
+          totalRounds: formData.totalRounds,
+          organizerWalletAddress: primaryWallet.address, // Use actual connected wallet address
           status: 'upcoming'
         }),
       });

@@ -256,7 +256,7 @@ export default function ContestDetailPage() {
                     </span>
                     {contest.organizer && (
                       <span className="text-sm font-bold text-gray-600">
-                        Organized by {contest.organizer.display_name || contest.organizer.username}
+                        Organized by {contest.organizer.username}
                       </span>
                     )}
                   </div>
@@ -344,7 +344,7 @@ export default function ContestDetailPage() {
                         </div>
                         <div>
                           <div className="font-black text-black">
-                            {participant.user.display_name || participant.user.username}
+                            {participant.user.username}
                           </div>
                           <div className="text-sm font-bold text-gray-600">
                             Rating: {participant.user.rating_cached || 'Unrated'}
