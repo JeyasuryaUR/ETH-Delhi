@@ -54,6 +54,8 @@ export default function ContestDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [isWalletReady, setIsWalletReady] = useState(false);
 
   const contestId = params.id as string;
 
@@ -103,6 +105,15 @@ export default function ContestDetailPage() {
       fetchContestDetails();
     }
   }, [contestId]);
+
+  // Track wallet readiness
+  useEffect(() => {
+    if (primaryWallet && user) {
+      setIsWalletReady(true);
+    } else {
+      setIsWalletReady(false);
+    }
+  }, [primaryWallet, user]);
 
   // Join contest function
   const handleJoinContest = async () => {
@@ -169,6 +180,48 @@ export default function ContestDetailPage() {
     }
   };
 
+  // Leave contest function
+  const handleLeaveContest = async () => {
+    if (!user || !primaryWallet) {
+      alert('Please make sure you are logged in');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to leave this contest?')) {
+      return;
+    }
+
+    try {
+      setIsLeaving(true);
+      // Note: You'll need to implement this endpoint in your backend
+      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contestId: contestId,
+          walletAddress: primaryWallet.address,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh contest data to show updated participant list
+        await fetchContestDetails();
+        alert('Successfully left the contest!');
+      } else {
+        alert(data.message || 'Failed to leave contest');
+      }
+    } catch (error) {
+      console.error('Error leaving contest:', error);
+      alert('Failed to leave contest. Please try again.');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   // Helper functions
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -189,10 +242,22 @@ export default function ContestDetailPage() {
   const isOrganizer = contest && primaryWallet && contest.organizer && 
     contest.organizer.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase();
 
+  console.log('Debug info:', {
+    contest: !!contest,
+    primaryWallet: !!primaryWallet,
+    walletAddress: primaryWallet?.address,
+    organizerAddress: contest?.organizer?.wallet_address,
+    isOrganizer,
+    isWalletReady,
+    participantCount: participants.length
+  });
+
   const isUserParticipant = primaryWallet && participants.some(p => p.user.wallet_address === primaryWallet.address);
 
-  const canJoin = contest && contest.status === 'registration' && !isUserParticipant && !isOrganizer;
-  const canStart = contest && contest.status === 'registration' && isOrganizer && participants.length >= 2;
+  // Only evaluate conditions when both wallet and contest data are ready
+  const canJoin = contest && isWalletReady && contest.status === 'registration' && !isUserParticipant && !isOrganizer;
+  const canLeave = contest && isWalletReady && contest.status === 'registration' && isUserParticipant && !isOrganizer;
+  const canStart = contest && isWalletReady && contest.status === 'registration' && isOrganizer && participants.length >= 2;
 
   if (isLoading) {
     return (
@@ -265,32 +330,71 @@ export default function ContestDetailPage() {
               
               {/* Action Buttons */}
               <div className="flex space-x-3">
-                {canJoin && (
-                  <Button 
-                    size="lg"
-                    onClick={handleJoinContest}
-                    disabled={isJoining}
-                    className="font-bold uppercase"
-                  >
-                    {isJoining ? 'Joining...' : 'Join Contest'}
-                  </Button>
-                )}
-                
-                {canStart && (
-                  <Button 
-                    size="lg"
-                    onClick={handleStartContest}
-                    disabled={isStarting}
-                    className="font-bold uppercase bg-green-500 hover:bg-green-600"
-                  >
-                    {isStarting ? 'Starting...' : 'Start Contest'}
-                  </Button>
-                )}
-                
-                {isUserParticipant && contest.status === 'registration' && (
+                {/* Show loading state while wallet/contest data is loading */}
+                {(!isWalletReady || !contest) && isLoading && (
                   <Button variant="outline" size="lg" disabled className="font-bold uppercase">
-                    Already Joined
+                    Loading...
                   </Button>
+                )}
+
+                {/* Show buttons only when both wallet and contest data are ready */}
+                {isWalletReady && contest && (
+                  <>
+                    {canJoin && (
+                      <Button 
+                        size="lg"
+                        onClick={handleJoinContest}
+                        disabled={isJoining}
+                        className="font-bold uppercase"
+                      >
+                        {isJoining ? 'Joining...' : 'Join Contest'}
+                      </Button>
+                    )}
+
+                    {canLeave && (
+                      <Button 
+                        size="lg"
+                        variant="outline"
+                        onClick={handleLeaveContest}
+                        disabled={isLeaving}
+                        className="font-bold uppercase border-red-500 text-red-500 hover:bg-red-50"
+                      >
+                        {isLeaving ? 'Leaving...' : 'Leave Contest'}
+                      </Button>
+                    )}
+                    
+                    {canStart && (
+                      <Button 
+                        size="lg"
+                        onClick={handleStartContest}
+                        disabled={isStarting}
+                        className="font-bold uppercase bg-green-500 hover:bg-green-600"
+                      >
+                        {isStarting ? 'Starting...' : 'Start Contest'}
+                      </Button>
+                    )}
+
+                    {/* Debug info for organizer when conditions aren't met */}
+                    {isOrganizer && contest.status === 'registration' && participants.length < 2 && (
+                      <Button variant="outline" size="lg" disabled className="font-bold uppercase">
+                        Need 2+ Participants
+                      </Button>
+                    )}
+
+                    {/* Show if organizer is also a participant */}
+                    {isOrganizer && isUserParticipant && contest.status === 'registration' && (
+                      <span className="text-sm text-gray-600 flex items-center">
+                        You are the organizer
+                      </span>
+                    )}
+
+                    {/* Show if contest is not in registration phase */}
+                    {contest.status !== 'registration' && (
+                      <span className="text-sm text-gray-500 flex items-center">
+                        Registration closed
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
