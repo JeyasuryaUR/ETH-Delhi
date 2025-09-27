@@ -249,7 +249,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pt-8 pb-8 sm:pt-12 sm:pb-12 md:pt-16 md:pb-16 lg:pt-20 lg:pb-20 xl:pt-24 xl:pb-24">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/80"
@@ -257,28 +257,22 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
       />
       
       {/* Dialog Content */}
-      <div className="relative z-10 max-w-2xl w-full mx-4">
-        <div className="p-8 bg-white border-2 border-black rounded-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="mb-8 text-center">
-            <motion.div 
-              className="w-16 h-16 bg-[#FFE81E] border-2 border-black rounded-full flex items-center justify-center mx-auto mb-4"
-              animate={{ rotate: [0, -5, 5, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <span className="text-2xl">🏆</span>
-          </motion.div>
-          <h2 className="text-3xl font-black text-black uppercase mb-2">Create Tournament</h2>
-          <p className="text-black font-medium">Set up your competitive chess tournament</p>
+      <div className="relative z-10 max-w-lg w-full mx-4">
+        <div className="p-6 bg-white border-2 border-black rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <div className="mb-6 text-center">
+            
+          <h2 className="text-2xl font-black text-black uppercase mb-2">Create Tournament</h2>
+          <p className="text-black font-medium text-sm">Set up your competitive chess tournament</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <Label className="text-sm font-bold text-black uppercase mb-2">Tournament Title</Label>
+            <Label className="text-xs font-bold text-black uppercase mb-1">Tournament Title</Label>
             <Input
               placeholder="Enter tournament name..."
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`font-medium ${errors.title ? 'border-red-500' : ''}`}
+              className={`font-medium text-sm ${errors.title ? 'border-red-500' : ''}`}
             />
             {errors.title && (
               <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.title}</p>
@@ -286,9 +280,9 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
           </div>
 
           <div>
-            <Label className="text-sm font-bold text-black uppercase mb-2">Time Control</Label>
+            <Label className="text-xs font-bold text-black uppercase mb-1">Time Control</Label>
             <Select onValueChange={(value) => handleInputChange('timeControl', value)} value={formData.timeControl}>
-              <Select.Trigger className={`font-medium ${errors.timeControl ? 'border-red-500' : ''}`}>
+              <Select.Trigger className={`font-medium text-sm ${errors.timeControl ? 'border-red-500' : ''}`}>
                 <Select.Value placeholder="Select time control..." />
               </Select.Trigger>
               <Select.Content>
@@ -325,14 +319,14 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             )}
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">Start Date & Time</Label>
+              <Label className="text-xs font-bold text-black uppercase mb-1">Start Date & Time</Label>
               <Input
                 type="datetime-local"
                 value={formData.startDate}
                 onChange={(e) => handleInputChange('startDate', e.target.value)}
-                className={`font-medium ${errors.startDate ? 'border-red-500' : ''}`}
+                className={`font-medium text-sm ${errors.startDate ? 'border-red-500' : ''}`}
               />
               {errors.startDate && (
                 <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.startDate}</p>
@@ -340,12 +334,12 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             </div>
 
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">End Date & Time</Label>
+              <Label className="text-xs font-bold text-black uppercase mb-1">End Date & Time</Label>
               <Input
                 type="datetime-local"
                 value={formData.endDate}
                 onChange={(e) => handleInputChange('endDate', e.target.value)}
-                className={`font-medium ${errors.endDate ? 'border-red-500' : ''}`}
+                className={`font-medium text-sm ${errors.endDate ? 'border-red-500' : ''}`}
               />
               {errors.endDate && (
                 <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.endDate}</p>
@@ -353,9 +347,9 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">Prize Pool (ETH)</Label>
+              <Label className="text-xs font-bold text-black uppercase mb-1">Prize Pool (ETH)</Label>
               <Input
                 type="number"
                 min="0"
@@ -363,7 +357,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
                 placeholder="0.00"
                 value={formData.prizePool}
                 onChange={(e) => handleInputChange('prizePool', parseFloat(e.target.value) || 0)}
-                className={`font-medium ${errors.prizePool ? 'border-red-500' : ''}`}
+                className={`font-medium text-sm ${errors.prizePool ? 'border-red-500' : ''}`}
               />
               {errors.prizePool && (
                 <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.prizePool}</p>
@@ -371,14 +365,14 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             </div>
 
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">Max Participants</Label>
+              <Label className="text-xs font-bold text-black uppercase mb-1">Max Participants</Label>
               <Input
                 type="number"
                 min="2"
                 placeholder="32"
                 value={formData.maxParticipants}
                 onChange={(e) => handleInputChange('maxParticipants', parseInt(e.target.value) || 0)}
-                className={`font-medium ${errors.maxParticipants ? 'border-red-500' : ''}`}
+                className={`font-medium text-sm ${errors.maxParticipants ? 'border-red-500' : ''}`}
               />
               {errors.maxParticipants && (
                 <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.maxParticipants}</p>
@@ -386,14 +380,14 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             </div>
 
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">Total Rounds</Label>
+              <Label className="text-xs font-bold text-black uppercase mb-1">Total Rounds</Label>
               <Input
                 type="number"
                 min="1"
                 placeholder="7"
                 value={formData.totalRounds}
                 onChange={(e) => handleInputChange('totalRounds', parseInt(e.target.value) || 0)}
-                className={`font-medium ${errors.totalRounds ? 'border-red-500' : ''}`}
+                className={`font-medium text-sm ${errors.totalRounds ? 'border-red-500' : ''}`}
               />
               {errors.totalRounds && (
                 <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.totalRounds}</p>
@@ -402,12 +396,12 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
           </div>
 
           <div>
-            <Label className="text-sm font-bold text-black uppercase mb-2">Wallet Address</Label>
+            <Label className="text-xs font-bold text-black uppercase mb-1">Wallet Address</Label>
             <Input
               placeholder={primaryWallet?.address ? "Wallet connected..." : "Please connect your wallet first"}
               value={formData.walletAddress}
               onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-              className={`font-medium font-mono text-sm ${errors.walletAddress ? 'border-red-500' : ''} ${!primaryWallet?.address ? 'bg-gray-100' : 'bg-green-50'}`}
+              className={`font-medium font-mono text-xs ${errors.walletAddress ? 'border-red-500' : ''} ${!primaryWallet?.address ? 'bg-gray-100' : 'bg-green-50'}`}
               readOnly
             />
             <div className="flex items-center justify-between mt-1">
@@ -424,14 +418,14 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             )}
           </div>
 
-          <div className="flex items-start space-x-3 p-4 rounded-lg bg-gray-50 border border-black">
+          <div className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 border border-black">
             <Checkbox
               checked={formData.termsAccepted}
               onCheckedChange={(checked) => handleInputChange('termsAccepted', checked)}
               className={errors.termsAccepted ? 'border-red-500' : ''}
             />
             <div className="flex-1">
-              <p className="text-sm font-bold text-black">
+              <p className="text-xs font-bold text-black">
                 I agree to the tournament terms and conditions
               </p>
               <p className="text-xs text-black mt-1">
@@ -444,18 +438,18 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-4 mt-8">
+        <div className="flex items-center justify-end space-x-3 mt-6">
           <Button
             variant="outline"
             onClick={handleClose}
-            className="font-bold uppercase"
+            className="font-bold uppercase text-sm"
             disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             onClick={handleCreateTournament}
-            className={`font-bold uppercase ${!primaryWallet?.address ? 'bg-gray-400 hover:bg-gray-400' : ''}`}
+            className={`font-bold uppercase text-sm ${!primaryWallet?.address ? 'bg-gray-400 hover:bg-gray-400' : ''}`}
             disabled={isSubmitting || !primaryWallet?.address}
             title={!primaryWallet?.address ? 'Please connect your wallet first' : ''}
           >
