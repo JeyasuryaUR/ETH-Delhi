@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, Trophy, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Trophy, RefreshCw, Play, Eye } from 'lucide-react';
 import { Button } from '@/components/retroui/Button';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 
 interface Player {
   id: string;
+  wallet_address: string;
   username: string;
   display_name: string;
   rating_cached: number;
@@ -38,6 +40,7 @@ export default function ContestPairingsPage() {
   const [pairingsData, setPairingsData] = useState<RoundPairings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, primaryWallet} = useDynamicContext();
 
   const fetchPairings = async () => {
     try {
@@ -112,6 +115,31 @@ export default function ContestPairingsPage() {
     }
   };
 
+  const isUserInPairing = (pairing: Pairing) => {
+    // const res = pairing.white?.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase() || 
+    //   pairing.black?.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase();
+
+    console.log(pairing.white?.wallet_address.toLowerCase(), primaryWallet?.address.toLowerCase(), pairing.black?.wallet_address.toLowerCase());
+    return primaryWallet && (
+      pairing.white?.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase() || 
+      pairing.black?.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase()
+    );
+  };
+
+  const canUserPlayGame = (pairing: Pairing) => {
+    return isUserInPairing(pairing) && !pairing.result;
+  };
+
+  const handlePlayGame = (pairing: Pairing) => {
+    // Navigate to the tournament game page
+    router.push(`/dashboard/chess/contests/${contestId}/game/${pairing.id}`);
+  };
+
+  const handleSpectateGame = (pairing: Pairing) => {
+    // Navigate to spectate the game
+    router.push(`/dashboard/chess/contests/${contestId}/game/${pairing.id}?spectate=true`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -136,6 +164,10 @@ export default function ContestPairingsPage() {
 
   const isRoundComplete = pairingsData.pairings.every(p => p.result);
   const isTournamentComplete = pairingsData.contestStatus === 'completed';
+  
+  // Find user's games in current round
+  const userGames = pairingsData.pairings.filter(p => isUserInPairing(p));
+  const userUnfinishedGames = userGames.filter(p => !p.result);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-background">
@@ -155,6 +187,42 @@ export default function ContestPairingsPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Contest
             </Button>
+
+            {/* User's Games Alert */}
+            {primaryWallet && userUnfinishedGames.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6"
+              >
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 retro-border-thick retro-shadow-lg p-6 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-black font-retro text-white mb-1">
+                        YOUR TURN TO PLAY!
+                      </h3>
+                      <p className="text-blue-100">
+                        You have {userUnfinishedGames.length} game{userUnfinishedGames.length > 1 ? 's' : ''} waiting. 
+                        Click "Play" to join your match.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {userUnfinishedGames.slice(0, 2).map((game) => (
+                        <Button
+                          key={game.id}
+                          onClick={() => handlePlayGame(game)}
+                          className="bg-white text-blue-600 hover:bg-blue-50 font-retro"
+                          size="sm"
+                        >
+                          <Play className="mr-1 h-3 w-3" />
+                          Play Game
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             <div className="bg-card retro-border-thick retro-shadow-lg p-8 rounded-lg">
               <div className="flex items-center justify-between mb-6">
@@ -250,6 +318,7 @@ export default function ContestPairingsPage() {
                     <th className="text-right py-4 px-6 font-retro font-bold uppercase text-sm">Rating</th>
                     <th className="text-right py-4 px-6 font-retro font-bold uppercase text-sm">Black Player</th>
                     <th className="text-center py-4 px-6 font-retro font-bold uppercase text-sm">Status</th>
+                    <th className="text-center py-4 px-6 font-retro font-bold uppercase text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -322,6 +391,54 @@ export default function ContestPairingsPage() {
                           <Clock className="mr-1 h-3 w-3" />
                           {getGameStatusText(pairing)}
                         </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex gap-2 justify-center">
+                          {/* Play Game Button - Only for participants */}
+                          {canUserPlayGame(pairing) && (
+                            <Button
+                              onClick={() => handlePlayGame(pairing)}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white font-retro"
+                            >
+                              <Play className="mr-1 h-3 w-3" />
+                              {pairing.started_at ? 'Resume' : 'Play'}
+                            </Button>
+                          )}
+                          
+                          {/* Spectate Button - For ongoing games */}
+                          {pairing.started_at && !pairing.result && (
+                            <Button
+                              onClick={() => handleSpectateGame(pairing)}
+                              size="sm"
+                              variant="outline"
+                              className="font-retro"
+                            >
+                              <Eye className="mr-1 h-3 w-3" />
+                              Watch
+                            </Button>
+                          )}
+                          
+                          {/* Game Complete - View Game */}
+                          {pairing.result && (
+                            <Button
+                              onClick={() => handleSpectateGame(pairing)}
+                              size="sm"
+                              variant="outline"
+                              className="font-retro"
+                            >
+                              <Eye className="mr-1 h-3 w-3" />
+                              Review
+                            </Button>
+                          )}
+                          
+                          {/* If user is not in this pairing and game hasn't started */}
+                          {!pairing.started_at && !pairing.result && !isUserInPairing(pairing) && (
+                            <span className="text-gray-400 text-sm font-retro">Waiting...</span>
+                          )}
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

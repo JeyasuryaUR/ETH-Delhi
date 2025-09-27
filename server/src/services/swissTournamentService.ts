@@ -704,6 +704,7 @@ export class SwissTournamentService {
             white: {
               select: {
                 id: true,
+                wallet_address: true,
                 username: true,
                 display_name: true,
                 rating_cached: true
@@ -712,6 +713,7 @@ export class SwissTournamentService {
             black: {
               select: {
                 id: true,
+                wallet_address: true,
                 username: true,
                 display_name: true,
                 rating_cached: true
@@ -757,6 +759,7 @@ export class SwissTournamentService {
             white: {
               select: {
                 id: true,
+                wallet_address: true,
                 username: true,
                 display_name: true,
                 rating_cached: true
@@ -765,6 +768,7 @@ export class SwissTournamentService {
             black: {
               select: {
                 id: true,
+                wallet_address: true,
                 username: true,
                 display_name: true,
                 rating_cached: true
