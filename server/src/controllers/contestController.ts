@@ -17,6 +17,8 @@ export const createContest = async (req: Request, res: Response) => {
       settings
     } = req.body ?? {};
 
+    // console.log(organizerWalletAddress);
+
     // Basic required fields check
     if (!title || !startDate || !endDate || prizePool === undefined || !maxParticipants || !totalRounds) {
       return res.status(400).json({
@@ -128,7 +130,7 @@ export const createContest = async (req: Request, res: Response) => {
     let organizerId = null;
     if (organizerWalletAddress) {
       const organizer = await prisma.users.findUnique({
-        where: { wallet_address: organizerWalletAddress },
+        where: { wallet_address: organizerWalletAddress.toLowerCase() },
         select: { id: true, username: true, display_name: true }
       });
 

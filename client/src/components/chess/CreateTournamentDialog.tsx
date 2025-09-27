@@ -35,7 +35,7 @@ interface TournamentFormData {
   prizePool: number;
   maxParticipants: number;
   totalRounds: number;
-  walletAddress: string;
+  organizerWalletAddress: string;
   termsAccepted: boolean;
 }
 
@@ -47,7 +47,7 @@ interface FormErrors {
   prizePool?: string;
   maxParticipants?: string;
   totalRounds?: string;
-  walletAddress?: string;
+  organizerWalletAddress?: string;
   termsAccepted?: string;
 }
 
@@ -62,7 +62,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
     prizePool: 0,
     maxParticipants: 32,
     totalRounds: 7,
-    walletAddress: '',
+    organizerWalletAddress: '',
     termsAccepted: false,
   });
 
@@ -74,7 +74,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
     if (primaryWallet?.address) {
       setFormData(prev => ({
         ...prev,
-        walletAddress: primaryWallet.address
+        organizerWalletAddress: primaryWallet.address
       }));
     }
   }, [primaryWallet?.address]);
@@ -136,11 +136,11 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
     }
 
     if (!primaryWallet?.address) {
-      newErrors.walletAddress = 'Please connect your wallet first';
-    } else if (!formData.walletAddress.trim()) {
-      newErrors.walletAddress = 'Wallet address is required';
-    } else if (!formData.walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      newErrors.walletAddress = 'Invalid wallet address format';
+      newErrors.organizerWalletAddress = 'Please connect your wallet first';
+    } else if (!formData.organizerWalletAddress.trim()) {
+      newErrors.organizerWalletAddress = 'Wallet address is required';
+    } else if (!formData.organizerWalletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      newErrors.organizerWalletAddress = 'Invalid wallet address format';
     }
 
     if (!formData.termsAccepted) {
@@ -215,7 +215,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
         prizePool: 0,
         maxParticipants: 32,
         totalRounds: 7,
-        walletAddress: primaryWallet?.address || '',
+        organizerWalletAddress: primaryWallet?.address || '',
         termsAccepted: false,
       });
       
@@ -405,9 +405,9 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
             <Label className="text-sm font-bold text-black uppercase mb-2">Wallet Address</Label>
             <Input
               placeholder={primaryWallet?.address ? "Wallet connected..." : "Please connect your wallet first"}
-              value={formData.walletAddress}
-              onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-              className={`font-medium font-mono text-sm ${errors.walletAddress ? 'border-red-500' : ''} ${!primaryWallet?.address ? 'bg-gray-100' : 'bg-green-50'}`}
+              value={formData.organizerWalletAddress}
+              onChange={(e) => handleInputChange('organizerWalletAddress', e.target.value)}
+              className={`font-medium font-mono text-sm ${errors.organizerWalletAddress ? 'border-red-500' : ''} ${!primaryWallet?.address ? 'bg-gray-100' : 'bg-green-50'}`}
               readOnly
             />
             <div className="flex items-center justify-between mt-1">
@@ -419,8 +419,8 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
                 <p className="text-xs text-red-600 font-bold">⚠ CONNECT WALLET</p>
               )}
             </div>
-            {errors.walletAddress && (
-              <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.walletAddress}</p>
+            {errors.organizerWalletAddress && (
+              <p className="text-red-500 text-xs font-bold mt-1 uppercase">{errors.organizerWalletAddress}</p>
             )}
           </div>
 
