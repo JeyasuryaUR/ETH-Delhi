@@ -466,14 +466,28 @@ export const getOngoingContests = async (req: Request, res: Response) => {
 
 export const joinContest = async (req: Request, res: Response) => {
   try {
-    const { contestId, userId } = req.body;
+    const { contestId, walletAddress } = req.body;
 
-    if (!contestId || !userId) {
+    if (!contestId || !walletAddress) {
       return res.status(400).json({
         success: false,
-        message: 'contestId and userId are required',
+        message: 'contestId and walletAddress are required',
       });
     }
+
+    // Fetch user by wallet address
+    const user = await prisma.users.findUnique({
+      where: { wallet_address: walletAddress }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User with the provided wallet address not found',
+      });
+    }
+
+    const userId = user.id;
 
     // Check if contest exists and is in registration phase
     const contest = await prisma.contests.findUnique({
@@ -565,14 +579,14 @@ export const joinContest = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('joinContest error:', err);
-    
+
     if (err.code === 'P2002') {
       return res.status(409).json({
         success: false,
         message: 'You are already a participant in this contest',
       });
     }
-    
+
     return res.status(500).json({ 
       success: false, 
       message: 'Internal server error' 
