@@ -149,7 +149,7 @@ const ClientWrapper = ({ children }: { children: ReactNode }) => {
       <WalletRedirectHandler>
         <div className="relative min-h-screen  bg-gradient-to-br from-gray-50 via-white to-gray-100">
           <NavContent />
-          <main className="pt-16" style={{ backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}>{children}</main>
+          <main style={{ backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}>{children}</main>
         </div>
       </WalletRedirectHandler>
     </DynamicContextProvider>
