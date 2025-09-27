@@ -6,7 +6,7 @@ import { Button } from '@/components/retroui/Button';
 import { ChessBoard } from '@/components/chess/ChessBoard';
 import { useChessSocket } from '@/hooks/useChessSocket';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Player {
   id: string;
@@ -26,6 +26,13 @@ interface GameState {
   winReason: string | null;
 }
 
+interface GameResult {
+  show: boolean;
+  type: 'win' | 'lose' | null;
+  message: string;
+  reason: string;
+}
+
 export default function ChessPage() {
   const router = useRouter();
   const { primaryWallet, user } = useDynamicContext();
@@ -39,6 +46,13 @@ export default function ChessPage() {
     playerColor: null,
     winner: null,
     winReason: null
+  });
+
+  const [gameResult, setGameResult] = useState<GameResult>({
+    show: false,
+    type: null,
+    message: '',
+    reason: ''
   });
 
   // Socket event handlers
@@ -85,6 +99,22 @@ export default function ChessPage() {
       board: data.finalBoard
     }));
 
+    // Determine if player won or lost
+    const playerWon = data.winner === gameState.player?.name || data.winner === 'You';
+    
+    // Show appropriate popup
+    setGameResult({
+      show: true,
+      type: playerWon ? 'win' : 'lose',
+      message: playerWon ? '🎉 HURRAY! CONGRATULATIONS! 🎉' : '😔 OOPS! BETTER LUCK NEXT TIME! 😔',
+      reason: data.reason
+    });
+
+    // Auto-hide popup after 5 seconds
+    setTimeout(() => {
+      setGameResult(prev => ({ ...prev, show: false }));
+    }, 5000);
+
     // Console log the game scoresheet as requested
     console.log('🏆 GAME COMPLETED 🏆');
     console.log('=====================================');
@@ -106,6 +136,19 @@ export default function ChessPage() {
       winner: gameState.player?.name || 'You',
       winReason: 'Opponent disconnected'
     }));
+
+    // Show win popup for opponent disconnection
+    setGameResult({
+      show: true,
+      type: 'win',
+      message: '🎉 VICTORY BY FORFEIT! 🎉',
+      reason: 'Opponent disconnected'
+    });
+
+    // Auto-hide popup after 5 seconds
+    setTimeout(() => {
+      setGameResult(prev => ({ ...prev, show: false }));
+    }, 5000);
   }, [gameState.player]);
 
   const handleError = useCallback((error: { message: string }) => {
@@ -126,7 +169,6 @@ export default function ChessPage() {
   useEffect(() => {
     if (primaryWallet && user) {
       // Use actual wallet data instead of hardcoded values
-      // console.log("User:", user);
       setGameState(prev => ({
         ...prev,
         player: {
@@ -170,148 +212,163 @@ export default function ChessPage() {
       winner: null,
       winReason: null
     });
+    setGameResult({ show: false, type: null, message: '', reason: '' });
+  };
+
+  const closePopup = () => {
+    setGameResult(prev => ({ ...prev, show: false }));
   };
 
   return (
-    <div className="">
-      <div className="py-12 px-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="bg-background h-screen overflow-hidden">
+      <div className="relative h-screen flex px-4 lg:px-8 bg-primary/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background" />
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23000000' fillOpacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
+        <div className="relative z-10 max-w-7xl mx-auto w-full h-full flex flex-col pt-24">
           {/* Header */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.back()}
-            className="mb-6 px-4 py-2 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-black font-bold uppercase text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-          >
-            ← Back to Chess Dashboard
-          </motion.button>
+          <div className="flex-shrink-0 mb-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.back()}
+              className="px-4 py-2 retro-border retro-shadow bg-card hover:bg-card/90 text-card-foreground font-retro text-xs uppercase tracking-wider"
+            >
+              ← Back
+            </motion.button>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 text-center"
-          >
-            <div className="inline-flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-[#FFE81E] border-2 border-black rounded-lg flex items-center justify-center">
-                <span className="text-2xl">⚔️</span>
-              </div>
-              <div>
-                <h1 className="text-4xl font-black text-black uppercase">Chess Arena</h1>
-                <p className="text-black font-bold">Challenge players worldwide in strategic chess battles</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-3">
-              <div className={`w-3 h-3 rounded-full border-2 border-black ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-sm font-bold text-black uppercase">
-                {isConnected ? 'Connected to game server' : 'Connecting...'}
-              </span>
-            </div>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Game Controls */}
-            <div className="lg:col-span-1">
+          <div className="grid lg:grid-cols-12 gap-4 flex-1 min-h-0">
+            {/* Left Side - Header Info and Game Controls */}
+            <div className="lg:col-span-3 space-y-3 overflow-y-auto">
+              {/* Header Info */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6"
+                className="bg-card retro-border retro-shadow p-4"
               >
-                <h2 className="text-xl font-black text-black uppercase mb-6">Game Controls</h2>
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-8 h-8 bg-primary text-primary-foreground retro-border flex items-center justify-center">
+                    <span className="text-sm">⚔️</span>
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-black font-heading text-foreground uppercase">Chess Arena</h1>
+                    <p className="text-xs text-muted-foreground font-medium">Challenge players worldwide</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full retro-border ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-xs font-retro text-card-foreground uppercase">
+                    {isConnected ? 'Connected' : 'Connecting...'}
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Game Controls */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-card retro-border retro-shadow p-4"
+              >
+                <h2 className="text-lg font-black font-heading text-foreground uppercase mb-4">Game Controls</h2>
 
                 {gameState.status === 'waiting' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 border border-black rounded-lg">
-                      <p className="text-sm font-bold text-black uppercase mb-2">Connected as:</p>
-                      <p className="font-black text-black">{gameState.player?.name}</p>
-                      <p className="text-xs font-bold text-black font-mono">
-                        {gameState.player?.walletAddress?.substring(0, 10)}...
+                  <div className="space-y-3">
+                    <div className="p-3 bg-muted retro-border rounded-lg">
+                      <p className="text-xs font-retro text-muted-foreground uppercase mb-1">Connected as:</p>
+                      <p className="font-black text-foreground text-sm">{gameState.player?.name}</p>
+                      <p className="text-xs font-retro text-muted-foreground font-mono">
+                        {gameState.player?.walletAddress?.substring(0, 8)}...
                       </p>
                     </div>
 
                     <Button
                       onClick={handleStartGame}
                       disabled={!isConnected || !gameState.player}
-                      className="w-full font-bold uppercase"
-                      size="lg"
+                      className="w-full font-retro uppercase text-sm py-2"
+                      size="sm"
                     >
                       {!isConnected ? 'Connecting...' : 'Start Game'}
                     </Button>
 
-                    <div className="text-center pt-4 border-t-2 border-black">
-                      <p className="text-sm font-bold text-black uppercase mb-2">Coming Soon:</p>
-                      <Button variant="outline" disabled className="w-full font-bold uppercase">
-                        Challenge Specific Player
+                    <div className="text-center pt-2 border-t retro-border">
+                      <p className="text-xs font-retro text-muted-foreground uppercase mb-2">Coming Soon:</p>
+                      <Button variant="secondary" disabled className="w-full font-retro uppercase text-xs py-1" size="sm">
+                        Challenge Player
                       </Button>
                     </div>
                   </div>
                 )}
 
                 {gameState.status === 'searching' && (
-                  <div className="space-y-4">
-                    <div className="text-center p-4 bg-[#FFE81E] rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-b-transparent"></div>
-                        <h3 className="font-black text-black uppercase">Searching...</h3>
+                  <div className="space-y-3">
+                    <div className="text-center p-4 bg-primary text-primary-foreground retro-border retro-shadow">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-b-transparent"></div>
+                        <h3 className="font-black font-heading uppercase text-sm">Searching...</h3>
                       </div>
-                      <p className="text-sm font-bold text-black uppercase">Looking for an opponent</p>
+                      <p className="text-xs font-retro uppercase">Looking for opponent</p>
                     </div>
                   </div>
                 )}
 
                 {gameState.status === 'matched' && (
-                  <div className="space-y-4">
-                    <div className="text-center p-4 bg-green-400 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      <h3 className="font-black text-black uppercase mb-2">Match Found!</h3>
-                      <p className="text-sm font-bold text-black">
+                  <div className="space-y-3">
+                    <div className="text-center p-4 bg-green-500 text-white retro-border retro-shadow">
+                      <h3 className="font-black font-heading uppercase mb-2 text-sm">Match Found!</h3>
+                      <p className="text-xs font-retro mb-1">
                         Opponent: {gameState.opponent?.name}
                       </p>
-                      <p className="text-xs font-bold text-black font-mono">
-                        {gameState.opponent?.walletAddress?.substring(0, 10)}...
+                      <p className="text-xs font-retro font-mono mb-2">
+                        {gameState.opponent?.walletAddress?.substring(0, 8)}...
                       </p>
-                      <div className="mt-3">
-                        <div className="animate-pulse font-black text-black uppercase">
-                          Starting game...
-                        </div>
+                      <div className="animate-pulse font-black font-heading uppercase text-xs">
+                        Starting...
                       </div>
                     </div>
                   </div>
                 )}
 
                 {gameState.status === 'playing' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-white rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      <h3 className="font-black text-black uppercase mb-2">Game in Progress</h3>
-                      <p className="text-sm font-bold text-black mb-2">
-                        You are playing as: <span className="font-black uppercase">{gameState.playerColor}</span>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-accent text-accent-foreground retro-border retro-shadow">
+                      <h3 className="font-black font-heading uppercase mb-2 text-sm">Game in Progress</h3>
+                      <p className="text-xs font-retro mb-1">
+                        Playing as: <span className="font-black uppercase text-primary">{gameState.playerColor}</span>
                       </p>
-                      <p className="text-sm font-bold text-black">
-                        Turn: <span className="font-black uppercase">{gameState.turn}</span>
+                      <p className="text-xs font-retro">
+                        Turn: <span className={`font-black uppercase ${gameState.turn === gameState.playerColor ? 'text-green-500' : 'text-red-500'}`}>{gameState.turn}</span>
                       </p>
                     </div>
 
-                    <div className="p-4 bg-gray-50 border border-black rounded-lg">
-                      <p className="text-sm font-bold text-black uppercase mb-1">Opponent:</p>
-                      <p className="font-black text-black">{gameState.opponent?.name}</p>
-                      <p className="text-xs font-bold text-black font-mono">
-                        {gameState.opponent?.walletAddress?.substring(0, 10)}...
+                    <div className="p-3 bg-muted retro-border rounded-lg">
+                      <p className="text-xs font-retro text-muted-foreground uppercase mb-1">Opponent:</p>
+                      <p className="font-black text-foreground text-sm mb-1">{gameState.opponent?.name}</p>
+                      <p className="text-xs font-retro text-muted-foreground font-mono">
+                        {gameState.opponent?.walletAddress?.substring(0, 8)}...
                       </p>
                     </div>
                   </div>
                 )}
 
                 {gameState.status === 'finished' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-[#FFE81E] rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      <h3 className="font-black text-black uppercase mb-2">Game Finished!</h3>
-                      <p className="text-sm font-bold text-black mb-1">
-                        Winner: <span className="font-black uppercase">{gameState.winner}</span>
+                  <div className="space-y-3">
+                    <div className="p-4 bg-primary text-primary-foreground retro-border retro-shadow">
+                      <h3 className="font-black font-heading uppercase mb-2 text-sm">Game Finished!</h3>
+                      <p className="text-xs font-retro mb-1">
+                        Winner: <span className="font-black uppercase text-green-300">{gameState.winner}</span>
                       </p>
-                      <p className="text-sm font-bold text-black">
+                      <p className="text-xs font-retro">
                         Reason: {gameState.winReason}
                       </p>
                     </div>
 
-                    <Button onClick={resetGame} className="w-full font-bold uppercase" size="lg">
+                    <Button onClick={resetGame} className="w-full font-retro uppercase text-sm py-2" size="sm">
                       Play Again
                     </Button>
                   </div>
@@ -319,35 +376,49 @@ export default function ChessPage() {
               </motion.div>
             </div>
 
-            {/* Chess Board */}
-            <div className="lg:col-span-2">
+            {/* Right Side - Chess Board */}
+            <div className="lg:col-span-9 flex items-center justify-center p-4 min-h-0">
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6"
+                className="w-full h-full flex items-center justify-center"
               >
                 {gameState.status === 'playing' ? (
-                  <ChessBoard
-                    position={gameState.board}
-                    playerColor={gameState.playerColor}
-                    onMove={handleMove}
-                    onGameEnd={handleGameEnd}
-                  />
+                  <div 
+                    className="aspect-square w-full mx-auto" 
+                    style={{ 
+                      maxWidth: 'min(80vh, 80vw)',
+                      width: '100%'
+                    }}
+                  >
+                    <ChessBoard
+                      position={gameState.board}
+                      playerColor={gameState.playerColor}
+                      onMove={handleMove}
+                      onGameEnd={handleGameEnd}
+                    />
+                  </div>
                 ) : (
-                  <div className="aspect-square bg-[#FFE81E] border-2 border-black rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    <div className="text-center">
-                      <div className="text-6xl mb-4">♚</div>
-                      <h3 className="text-xl font-black text-black uppercase mb-2">
+                  <div 
+                    className="aspect-square bg-card retro-border-thick retro-shadow-lg flex items-center justify-center mx-auto"
+                    style={{ 
+                      maxWidth: 'min(80vh, 80vw)',
+                      width: '100%'
+                    }}
+                  >
+                    <div className="text-center p-8">
+                      <div className="text-6xl mb-6 text-primary">♚</div>
+                      <h3 className="text-2xl font-black font-heading text-foreground uppercase mb-4">
                         {gameState.status === 'waiting' && 'Ready to Play'}
                         {gameState.status === 'searching' && 'Finding Opponent'}
                         {gameState.status === 'matched' && 'Preparing Board'}
                         {gameState.status === 'finished' && 'Game Complete'}
                       </h3>
-                      <p className="font-bold text-black">
-                        {gameState.status === 'waiting' && 'Click "Start Game" to begin'}
-                        {gameState.status === 'searching' && 'Searching for an opponent...'}
-                        {gameState.status === 'matched' && 'Match found! Starting soon...'}
-                        {gameState.status === 'finished' && 'Check console for game results'}
+                      <p className="text-sm font-retro text-muted-foreground">
+                        {gameState.status === 'waiting' && 'Click "Start Game" to begin your chess journey'}
+                        {gameState.status === 'searching' && 'Searching for a worthy opponent...'}
+                        {gameState.status === 'matched' && 'Match found! Get ready to play...'}
+                        {gameState.status === 'finished' && 'Check console for detailed game results'}
                       </p>
                     </div>
                   </div>
@@ -357,7 +428,163 @@ export default function ChessPage() {
           </div>
         </div>
       </div>
+
+      {/* Game Result Popup */}
+      <AnimatePresence>
+        {gameResult.show && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            onClick={closePopup}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15
+                }
+              }}
+              exit={{ 
+                scale: 0.8, 
+                opacity: 0,
+                transition: {
+                  duration: 0.3
+                }
+              }}
+              className="relative bg-gray-800 border-4 border-gray-600 rounded-lg retro-shadow-lg text-center max-w-lg mx-4 p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closePopup}
+                className="absolute top-3 right-3 w-6 h-6 bg-gray-600 hover:bg-gray-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
+              >
+                ×
+              </button>
+
+              {/* Trophy/Icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ 
+                  scale: 1,
+                  rotate: 0
+                }}
+                transition={{ 
+                  delay: 0.2,
+                  duration: 0.8,
+                  type: "spring",
+                  stiffness: 200
+                }}
+                className="text-6xl mb-6"
+              >
+                {gameResult.type === 'win' ? '🏆' : '💀'}
+              </motion.div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="text-4xl font-black text-white uppercase mb-4 tracking-wider"
+              >
+                {gameResult.type === 'win' ? 'VICTORY!' : 'DEFEAT!'}
+              </motion.h2>
+
+              {/* Message */}
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="text-white text-lg mb-8 leading-relaxed"
+              >
+                {gameResult.type === 'win' 
+                  ? 'Congratulations! You have successfully completed the game. Your strategic moves led to a brilliant victory!'
+                  : 'Better luck next time! Your opponent outplayed you this round. Learn from this defeat and come back stronger!'
+                }
+              </motion.p>
+
+              {/* Action button */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+                className="flex justify-center"
+              >
+                <button
+                  onClick={resetGame}
+                  className="bg-black text-white px-8 py-4 border-4 border-white font-black uppercase text-lg tracking-wider hover:bg-gray-900 transition-colors duration-200 retro-shadow"
+                >
+                  {gameResult.type === 'win' ? 'EXCELLENT!' : 'TRY AGAIN!'}
+                </button>
+              </motion.div>
+
+              {/* Particle effects */}
+              {gameResult.type === 'win' && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {[...Array(15)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ 
+                        x: '50%', 
+                        y: '50%', 
+                        scale: 0,
+                        rotate: 0
+                      }}
+                      animate={{ 
+                        x: `${50 + (Math.random() - 0.5) * 300}%`, 
+                        y: `${50 + (Math.random() - 0.5) * 300}%`,
+                        scale: [0, 1, 0],
+                        rotate: 360
+                      }}
+                      transition={{ 
+                        delay: 1 + i * 0.1,
+                        duration: 2.5,
+                        ease: "easeOut"
+                      }}
+                      className="absolute w-3 h-3 bg-yellow-400 rounded-full"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Defeat effect */}
+              {gameResult.type === 'lose' && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ 
+                        x: '50%', 
+                        y: '50%', 
+                        scale: 0,
+                        rotate: 0
+                      }}
+                      animate={{ 
+                        x: `${50 + (Math.random() - 0.5) * 200}%`, 
+                        y: `${50 + (Math.random() - 0.5) * 200}%`,
+                        scale: [0, 1, 0],
+                        rotate: 180
+                      }}
+                      transition={{ 
+                        delay: 1 + i * 0.2,
+                        duration: 2,
+                        ease: "easeOut"
+                      }}
+                      className="absolute w-2 h-2 bg-red-500 rounded-full"
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-
 }
