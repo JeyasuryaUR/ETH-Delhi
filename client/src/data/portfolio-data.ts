@@ -22,10 +22,10 @@ export const skills = [
 ]
 
 export const achievements = [
-  { number: "5K+", label: "Active Players" },
-  { number: "50+", label: "Daily Tournaments" },
-  { number: "2024", label: "Platform Launch" },
-  { number: "99%", label: "Uptime Guarantee" },
+  { number: "FIDE", label: "Rating Integration" },
+  { number: "ENS", label: "Chess Identities" },
+  { number: "DAO", label: "Governance" },
+  { number: "NFT", label: "Match Rewards" },
 ]
 
 export const careerTimeline = [
