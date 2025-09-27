@@ -56,6 +56,7 @@ model contests {
   settings     Json?
   status       String    @default("registration")
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  prize_pool   Int       @default(0)
 
   organizer users? @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
   participants contest_participants[]

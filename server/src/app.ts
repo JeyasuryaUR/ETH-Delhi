@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes';
+import contestRoutes from './routes/contestRoutes';
 import { initializeChessSocket } from './socket/chessSocket';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/api/users', userRoutes);
+app.use('/api/contests', contestRoutes);
 
 app.get('/', (_req, res) => {
   res.send('Hello, world! Chess server is running!');

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/retroui/Button';
 import { Input } from '@/components/retroui/Input';
 import { Label } from '@/components/retroui/Label';
@@ -83,19 +84,68 @@ export default function ContestPage() {
     }
   };
 
-  const handleConfirm = () => {
-    // Here you would typically send the data to your backend
-    console.log('Contest created:', formData);
-    setIsDialogOpen(false);
-    // Reset form or redirect
-    setFormData({
-      title: '',
-      maxParticipants: 40,
-      startDate: '',
-      endDate: '',
-      prizePool: 0,
-      termsAccepted: false,
+  const handleConfirm = async () => {
+    const loadingToast = toast.loading('Creating contest...', {
+      position: 'top-center',
     });
+
+    try {
+      const contestData = {
+        title: formData.title,
+        type: 'standard', // Default type as requested
+        startDate: formData.startDate, // This will be in YYYY-MM-DD format
+        endDate: formData.endDate, // This will be in YYYY-MM-DD format
+        prizePool: formData.prizePool,
+        timeControl: null, // Can be added later if needed
+        settings: {
+          maxParticipants: formData.maxParticipants,
+          termsAccepted: formData.termsAccepted
+        }
+      };
+
+      const response = await fetch('http://localhost:8000/api/contests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contestData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('Contest created successfully:', result.data);
+        toast.dismiss(loadingToast);
+        toast.success('Contest created successfully!', {
+          duration: 4000,
+          position: 'top-center',
+        });
+        setIsDialogOpen(false);
+        // Reset form
+        setFormData({
+          title: '',
+          maxParticipants: 40,
+          startDate: '',
+          endDate: '',
+          prizePool: 0,
+          termsAccepted: false,
+        });
+      } else {
+        console.error('Failed to create contest:', result.message);
+        toast.dismiss(loadingToast);
+        toast.error(`Failed to create contest: ${result.message}`, {
+          duration: 5000,
+          position: 'top-center',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating contest:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Error creating contest. Please try again.', {
+        duration: 5000,
+        position: 'top-center',
+      });
+    }
   };
 
   return (
@@ -171,7 +221,7 @@ export default function ContestPage() {
                   </Label>
                   <Input
                     id="startDate"
-                    type="datetime-local"
+                    type="date"
                     value={formData.startDate}
                     onChange={(e) => handleInputChange('startDate', e.target.value)}
                     className={`text-lg ${errors.startDate ? 'border-red-500' : ''}`}
@@ -188,7 +238,7 @@ export default function ContestPage() {
                   </Label>
                   <Input
                     id="endDate"
-                    type="datetime-local"
+                    type="date"
                     value={formData.endDate}
                     onChange={(e) => handleInputChange('endDate', e.target.value)}
                     className={`text-lg ${errors.endDate ? 'border-red-500' : ''}`}
