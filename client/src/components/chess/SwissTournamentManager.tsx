@@ -332,7 +332,7 @@ export const SwissTournamentManager: React.FC<SwissTournamentManagerProps> = ({
                 <tr className="border-b">
                   <th className="text-left p-2">#</th>
                   <th className="text-left p-2">Player</th>
-                  <th className="text-left p-2">Rating</th>
+                  <th className="text-left p-2">Rating/Points</th>
                   <th className="text-left p-2">Score</th>
                   <th className="text-left p-2">W-L-D</th>
                   <th className="text-left p-2">Buchholz</th>
@@ -348,7 +348,10 @@ export const SwissTournamentManager: React.FC<SwissTournamentManagerProps> = ({
                         <div className="text-gray-500 text-xs">@{player.username}</div>
                       </div>
                     </td>
-                    <td className="p-2">{player.rating}</td>
+                    <td className="p-2">
+                      <div className="font-medium">{player.rating}</div>
+                      <div className="text-sm text-blue-600 font-semibold">{player.score} pts</div>
+                    </td>
                     <td className="p-2 font-medium">{player.score}</td>
                     <td className="p-2">{player.wins}-{player.losses}-{player.draws}</td>
                     <td className="p-2">{player.buchholzScore.toFixed(1)}</td>

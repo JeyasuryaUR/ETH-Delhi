@@ -205,20 +205,20 @@ export class SwissTournamentService {
       pairings.push({ white: byePlayer, black: byePlayer, boardNumber: 0 });
     }
 
-    // Dutch system pairing: top half vs bottom half
-    const half = Math.floor(unpaired.length / 2);
-    const topHalf = unpaired.slice(0, half);
-    const bottomHalf = unpaired.slice(half);
-
-    for (let i = 0; i < topHalf.length && i < bottomHalf.length; i++) {
-      const player1 = topHalf[i];
+    // Simple pairing for even number of players
+    while (unpaired.length >= 2) {
+      // Dutch system pairing: try to pair top half with bottom half
+      const half = Math.floor(unpaired.length / 2);
+      const player1 = unpaired[0]; // Take first player from top half
+      
       let bestOpponent: Player | null = null;
       let bestOpponentIndex = -1;
       let bestScore = Infinity;
 
-      // Find best opponent from bottom half
-      for (let j = 0; j < bottomHalf.length; j++) {
-        const player2 = bottomHalf[j];
+      // Look for best opponent in bottom half first, then expand search if needed
+      const searchStart = Math.max(1, half);
+      for (let j = searchStart; j < unpaired.length; j++) {
+        const player2 = unpaired[j];
         
         // Skip if they've played before
         if (this.countPreviousMeetings(player1, player2) > 0) {
@@ -248,9 +248,32 @@ export class SwissTournamentService {
         }
       }
 
+      // If no opponent found in bottom half, search in remaining top half
+      if (!bestOpponent) {
+        for (let j = 1; j < searchStart && j < unpaired.length; j++) {
+          const player2 = unpaired[j];
+          
+          // Skip if they've played before
+          if (this.countPreviousMeetings(player1, player2) > 0) {
+            continue;
+          }
+
+          // Calculate pairing score
+          let score = Math.abs(player1.rating - player2.rating) / 100;
+          
+          if (score < bestScore) {
+            bestScore = score;
+            bestOpponent = player2;
+            bestOpponentIndex = j;
+          }
+        }
+      }
+
       if (bestOpponent && bestOpponentIndex >= 0) {
-        // Remove the selected opponent from bottom half
-        bottomHalf.splice(bestOpponentIndex, 1);
+        // Remove both players from unpaired list
+        unpaired.splice(0, 1); // Remove player1 (always at index 0)
+        const adjustedIndex = bestOpponentIndex > 0 ? bestOpponentIndex - 1 : bestOpponentIndex;
+        unpaired.splice(adjustedIndex, 1); // Remove bestOpponent
         
         // Determine colors based on color balance
         const player1WhiteGames = this.countWhiteGames(player1);
@@ -273,6 +296,10 @@ export class SwissTournamentService {
         }
         
         pairings.push({ white, black, boardNumber: 0 });
+      } else {
+        // No valid pairing found, break to prevent infinite loop
+        console.warn(`No valid pairing found for player ${player1.username}`);
+        break;
       }
     }
 
@@ -362,32 +389,43 @@ export class SwissTournamentService {
       });
     }
 
-    // Create games for each pairing
-    for (const pairing of pairings) {
-      if (pairing.white.userId === pairing.black.userId) {
-        // This is a bye - update participant stats
-        await prisma.contest_participants.update({
-          where: { id: pairing.white.id },
-          data: {
-            byes: { increment: 1 },
-            score: { increment: 1 } // Bye gives 1 point
-          }
-        });
-      } else {
-        // Create actual game
-        await prisma.games.create({
-          data: {
-            contest_id: contestId,
-            round_id: round.id,
-            round_number: roundNumber,
-            white_id: pairing.white.userId,
-            black_id: pairing.black.userId,
-            white_rating_before: pairing.white.rating,
-            black_rating_before: pairing.black.rating,
-            time_control: 'standard', // This should come from contest settings
-            rated: true
-          }
-        });
+    // Check if games for this round already exist to prevent duplicates
+    const existingGames = await prisma.games.findMany({
+      where: {
+        contest_id: contestId,
+        round_number: roundNumber
+      }
+    });
+
+    // Only create games if none exist for this round
+    if (existingGames.length === 0) {
+      // Create games for each pairing
+      for (const pairing of pairings) {
+        if (pairing.white.userId === pairing.black.userId) {
+          // This is a bye - update participant stats
+          await prisma.contest_participants.update({
+            where: { id: pairing.white.id },
+            data: {
+              byes: { increment: 1 },
+              score: { increment: 1 } // Bye gives 1 point
+            }
+          });
+        } else {
+          // Create actual game
+          await prisma.games.create({
+            data: {
+              contest_id: contestId,
+              round_id: round.id,
+              round_number: roundNumber,
+              white_id: pairing.white.userId,
+              black_id: pairing.black.userId,
+              white_rating_before: pairing.white.rating,
+              black_rating_before: pairing.black.rating,
+              time_control: 'standard', // This should come from contest settings
+              rated: true
+            }
+          });
+        }
       }
     }
 
