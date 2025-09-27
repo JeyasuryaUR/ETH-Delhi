@@ -9,6 +9,7 @@ import { Label } from '@/components/retroui/Label';
 import { Checkbox } from '@/components/retroui/Checkbox';
 import { Select } from '@/components/retroui/Select';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { API_BASE } from '@/lib/config';
 
 interface CreateTournamentDialogProps {
   isOpen: boolean;

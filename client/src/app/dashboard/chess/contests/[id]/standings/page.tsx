@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Medal, Crown, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/retroui/Button';
+import { API_BASE } from '@/lib/config';
 
 interface ContestStanding {
   rank: number;

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/retroui/Button';
 import { CreateTournamentDialog } from '@/components/chess/CreateTournamentDialog';
+import { API_BASE } from '@/lib/config';
 
 interface Tournament {
   id: string;

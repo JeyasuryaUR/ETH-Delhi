@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Users, Trophy, RefreshCw, Play, Eye } from 'lucide-react';
 import { Button } from '@/components/retroui/Button';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { API_BASE } from '@/lib/config';
 
 interface Player {
   id: string;

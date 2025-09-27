@@ -8,6 +8,7 @@ import { Card } from '@/components/retroui/Card';
 import { Users, Trophy } from 'lucide-react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useUser } from '@/components/ClientWrapper';
+import { API_BASE } from '@/lib/config';
 
 interface Participant {
   id: string;

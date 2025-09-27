@@ -9,6 +9,7 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, User, Trophy } from 'lucide-react';
 import { useUser } from '@/components/ClientWrapper';
+import { API_BASE } from '@/lib/config';
 
 interface Player {
   id: string;

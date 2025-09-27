@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia } from "viem/chains";
 import { DynamicContextProvider, DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { API_BASE } from "@/lib/config";
 
 // User context to share user data across components
 interface UserContextType {
