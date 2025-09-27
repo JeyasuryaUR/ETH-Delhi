@@ -81,13 +81,13 @@ export const createContest = async (req: Request, res: Response) => {
     }
 
     // Validate type
-    const validTypes = ['standard', 'blitz', 'bullet'];
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Type must be one of: standard, blitz, bullet',
-      });
-    }
+    // const validTypes = ['standard', 'blitz', 'bullet'];
+    // if (!validTypes.includes(type)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'Type must be one of: standard, blitz, bullet',
+    //   });
+    // }
 
     // Validate maxParticipants
     if (maxParticipants < 2) {
@@ -151,7 +151,7 @@ export const createContest = async (req: Request, res: Response) => {
         start_at: start,
         end_at: end,
         organizer_id: organizerId,
-        prize_pool: Math.round(Number(prizePool) * 100), // Convert to cents for integer storage
+        prize_pool: Number(prizePool), 
         max_participants: Number(maxParticipants),
         total_rounds: Number(totalRounds),
         settings: settings || {
