@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { SwissTournamentService } from '../services/swissTournamentService';
 
 export const createContest = async (req: Request, res: Response) => {
   try {
@@ -594,6 +595,346 @@ export const getContestParticipants = async (req: Request, res: Response) => {
     return res.status(500).json({ 
       success: false, 
       message: 'Internal server error' 
+    });
+  }
+};
+
+// Start a Swiss tournament
+export const startSwissTournament = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+
+    if (!contestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    // Check if contest exists and is in registration phase
+    const contest = await prisma.contests.findUnique({
+      where: { id: contestId },
+      include: {
+        _count: {
+          select: {
+            participants: true
+          }
+        }
+      }
+    });
+
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contest not found',
+      });
+    }
+
+    if (contest.status !== 'registration') {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest is not in registration phase',
+      });
+    }
+
+    if (contest._count.participants < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Need at least 2 participants to start a tournament',
+      });
+    }
+
+    // Start the Swiss tournament
+    await SwissTournamentService.startSwissTournament(contestId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Swiss tournament started successfully',
+      data: {
+        contestId,
+        totalRounds: 5, // This will be calculated by the service
+        currentRound: 1
+      }
+    });
+  } catch (err: any) {
+    console.error('startSwissTournament error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Start a tournament round
+export const startTournamentRound = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+    const { roundNumber } = req.body;
+
+    if (!contestId || !roundNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID and round number are required',
+      });
+    }
+
+    // Check if contest exists and is active
+    const contest = await prisma.contests.findUnique({
+      where: { id: contestId }
+    });
+
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contest not found',
+      });
+    }
+
+    if (contest.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest is not active',
+      });
+    }
+
+    // Start the round
+    const pairings = await SwissTournamentService.startTournamentRound(contestId, roundNumber);
+
+    // Update contest current round
+    await prisma.contests.update({
+      where: { id: contestId },
+      data: { current_round: roundNumber }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Round ${roundNumber} started successfully`,
+      data: {
+        contestId,
+        roundNumber,
+        pairings: pairings.map(p => ({
+          boardNumber: p.boardNumber,
+          white: {
+            id: p.white.userId,
+            username: p.white.username,
+            displayName: p.white.displayName,
+            rating: p.white.rating,
+            score: p.white.score
+          },
+          black: {
+            id: p.black.userId,
+            username: p.black.username,
+            displayName: p.black.displayName,
+            rating: p.black.rating,
+            score: p.black.score
+          },
+          isBye: p.white.userId === p.black.userId
+        }))
+      }
+    });
+  } catch (err: any) {
+    console.error('startTournamentRound error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Complete a tournament round
+export const completeTournamentRound = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+    const { roundNumber } = req.body;
+
+    if (!contestId || !roundNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID and round number are required',
+      });
+    }
+
+    // Complete the round
+    await SwissTournamentService.completeTournamentRound(contestId, roundNumber);
+
+    return res.status(200).json({
+      success: true,
+      message: `Round ${roundNumber} completed successfully`,
+      data: {
+        contestId,
+        roundNumber
+      }
+    });
+  } catch (err: any) {
+    console.error('completeTournamentRound error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Get tournament standings
+export const getTournamentStandings = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+
+    if (!contestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    // Get participants with their standings
+    const participants = await SwissTournamentService.getContestParticipants(contestId);
+
+    // Sort by score, then by tiebreaks
+    participants.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.buchholzScore !== a.buchholzScore) return b.buchholzScore - a.buchholzScore;
+      if (b.sonnebornBerger !== a.sonnebornBerger) return b.sonnebornBerger - a.sonnebornBerger;
+      return b.rating - a.rating;
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        contestId,
+        standings: participants.map((p, index) => ({
+          position: index + 1,
+          id: p.id,
+          userId: p.userId,
+          username: p.username,
+          displayName: p.displayName,
+          rating: p.rating,
+          score: p.score,
+          wins: p.wins,
+          losses: p.losses,
+          draws: p.draws,
+          byes: p.byes,
+          buchholzScore: p.buchholzScore,
+          sonnebornBerger: p.sonnebornBerger
+        }))
+      }
+    });
+  } catch (err: any) {
+    console.error('getTournamentStandings error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Complete Swiss tournament
+export const completeSwissTournament = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+
+    if (!contestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    // Complete the tournament
+    await SwissTournamentService.completeSwissTournament(contestId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Swiss tournament completed successfully',
+      data: {
+        contestId
+      }
+    });
+  } catch (err: any) {
+    console.error('completeSwissTournament error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Get tournament rounds
+export const getTournamentRounds = async (req: Request, res: Response) => {
+  try {
+    const { contestId } = req.params;
+
+    if (!contestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    const rounds = await prisma.tournament_rounds.findMany({
+      where: { contest_id: contestId },
+      include: {
+        games: {
+          include: {
+            white: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true
+              }
+            },
+            black: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true
+              }
+            },
+            winner: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { round_number: 'asc' }
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        contestId,
+        rounds: rounds.map(round => ({
+          id: round.id,
+          roundNumber: round.round_number,
+          status: round.status,
+          startAt: round.start_at,
+          endAt: round.end_at,
+          games: round.games.map(game => ({
+            id: game.id,
+            white: game.white,
+            black: game.black,
+            winner: game.winner,
+            result: game.result,
+            started_at: game.started_at,
+            ended_at: game.ended_at
+          }))
+        }))
+      }
+    });
+  } catch (err: any) {
+    console.error('getTournamentRounds error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
