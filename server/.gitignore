@@ -1,46 +1,73 @@
-# Dependencies
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-package-lock.json
-yarn.lock
+# General backend .gitignore for a TypeScript + Prisma project
 
-# TypeScript compiled output
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Yarn & pnpm
+.pnp*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build outputs
 dist/
 build/
+out/
+
+# TypeScript
 *.tsbuildinfo
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-# IDE files
-.idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
+# Prisma
+prisma/dev.db
+prisma/test.db
+prisma/.env
+prisma/migrations/
+src/generated/prisma/
+prisma/generated/
+prisma/client/
+prisma/*.sqlite
 
-# Logs
-logs/
-*.log
+# Coverage reports
+coverage/
+*.lcov
 
-# OS specific files
+# OS files
 .DS_Store
 Thumbs.db
 
-# Coverage directory
-coverage/
+# Misc
+*.pem
+*.log
 
-# Temporary files
-tmp/
-temp/
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Debug
-.pnpm-debug.log*
+# Others
+*.local
+*.cache
+.nyc_output/
+# End of Selection
 
-# Optional eslint cache
-.eslintcache
+/src/generated/prisma
+
+/src/generated/prisma
+
+/src/generated/prisma
+
+/src/generated/prisma
+
+/src/generated/prisma
