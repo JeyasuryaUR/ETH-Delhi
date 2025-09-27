@@ -58,35 +58,52 @@ model contests {
   created_at       DateTime  @default(now()) @db.Timestamptz(6)
   prize_pool       Int       @default(0)
   max_participants Int       @default(0)
+  tournament_type  String    @default("swiss") // "swiss", "round_robin", "elimination"
+  total_rounds     Int?      // Number of rounds for Swiss tournaments
+  current_round    Int       @default(0) // Current round number
+  round_duration   Int?      // Duration of each round in minutes
 
   organizer    users?                 @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
   participants contest_participants[]
   games        games[]
+  rounds       tournament_rounds[]
 
   @@index([status], map: "idx_contests_status")
   @@map("contests")
 }
 
 model contest_participants {
-  id         String   @id @default(uuid()) @db.Uuid
-  contest_id String   @db.Uuid
-  user_id    String   @db.Uuid
-  seed       Int?
-  score      Decimal  @default(0)
-  tiebreaks  Json?
-  joined_at  DateTime @default(now()) @db.Timestamptz(6)
+  id                String   @id @default(uuid()) @db.Uuid
+  contest_id        String   @db.Uuid
+  user_id           String   @db.Uuid
+  seed              Int?
+  score             Decimal  @default(0)
+  tiebreaks         Json?
+  joined_at         DateTime @default(now()) @db.Timestamptz(6)
+  // Swiss tournament specific fields
+  wins              Int      @default(0)
+  losses            Int      @default(0)
+  draws             Int      @default(0)
+  byes              Int      @default(0)
+  rating_at_start   Int?     // Rating when tournament started
+  rating_at_end     Int?     // Rating after tournament ends
+  buchholz_score    Decimal  @default(0) // Buchholz tiebreak score
+  sonneborn_berger  Decimal  @default(0) // Sonneborn-Berger tiebreak score
 
   contest contests @relation(fields: [contest_id], references: [id], onDelete: Cascade)
   user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([contest_id, user_id])
   @@index([contest_id], map: "idx_participants_contest")
+  @@index([contest_id, score(sort: Desc)], map: "idx_participants_score")
   @@map("contest_participants")
 }
 
 model games {
   id                  String    @id @default(uuid()) @db.Uuid
   contest_id          String?   @db.Uuid
+  round_id            String?   @db.Uuid
+  round_number        Int?      // Round number in tournament
   white_id            String?   @db.Uuid
   black_id            String?   @db.Uuid
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
@@ -109,6 +126,7 @@ model games {
   metadata            Json?
 
   contest             contests?             @relation(fields: [contest_id], references: [id], onDelete: SetNull)
+  round               tournament_rounds?    @relation(fields: [round_id], references: [id], onDelete: SetNull)
   white               users?                @relation("WhiteUser", fields: [white_id], references: [id], onDelete: SetNull)
   black               users?                @relation("BlackUser", fields: [black_id], references: [id], onDelete: SetNull)
   winner              users?                @relation("WinnerUser", fields: [winner_id], references: [id], onDelete: SetNull)
@@ -118,8 +136,28 @@ model games {
 
   @@index([white_id, black_id], map: "idx_games_players")
   @@index([contest_id], map: "idx_games_contest")
+  @@index([round_id], map: "idx_games_round")
   @@index([started_at(sort: Desc)], map: "idx_games_started_at")
   @@map("games")
+}
+
+model tournament_rounds {
+  id          String    @id @default(uuid()) @db.Uuid
+  contest_id  String    @db.Uuid
+  round_number Int
+  status      String    @default("pending") // "pending", "active", "completed"
+  start_at    DateTime? @db.Timestamptz(6)
+  end_at      DateTime? @db.Timestamptz(6)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  metadata    Json?
+
+  contest contests @relation(fields: [contest_id], references: [id], onDelete: Cascade)
+  games   games[]
+
+  @@unique([contest_id, round_number])
+  @@index([contest_id], map: "idx_rounds_contest")
+  @@index([contest_id, round_number], map: "idx_rounds_contest_round")
+  @@map("tournament_rounds")
 }
 
 model game_moves {
