@@ -71,13 +71,15 @@ export default function TournamentGamePage() {
       
       if (data.success && data.data) {
         const game = data.data;
-        const isPlayerInGame = primaryWallet && (
-          game.white.id === user?.userId || 
-          game.black.id === user?.userId
+        // Use wallet address comparison instead of user ID
+        const userWalletAddress = primaryWallet?.address?.toLowerCase();
+        const isPlayerInGame = userWalletAddress && (
+          game.white.wallet_address?.toLowerCase() === userWalletAddress || 
+          game.black.wallet_address?.toLowerCase() === userWalletAddress
         );
         
         const playerColor = isPlayerInGame ? 
-          (game.white.id === user?.userId ? 'white' : 'black') : null;
+          (game.white.wallet_address?.toLowerCase() === userWalletAddress ? 'white' : 'black') : null;
 
         setGameState(prev => ({
           ...prev,
@@ -106,8 +108,15 @@ export default function TournamentGamePage() {
 
   // Socket event handlers for tournament games
   const handleGameFound = useCallback((data: any) => {
-    // Tournament games are already "found", this might be used for real-time updates
-    console.log('Tournament game update:', data);
+    // Tournament games are already "found", this handles the ready state
+    console.log('Tournament game ready:', data);
+    setGameState(prev => ({
+      ...prev,
+      status: 'playing',
+      playerColor: data.playerColor,
+      board: data.board || prev.board,
+      turn: data.turn || 'white'
+    }));
   }, []);
 
   const handleMoveMade = useCallback((data: { move: any; turn: 'white' | 'black'; board: string; moveHistory: string[]; check?: boolean }) => {
@@ -130,9 +139,12 @@ export default function TournamentGamePage() {
       const result = data.winner === 'draw' ? '1/2-1/2' :
                     data.winner === gameState.game?.white.username ? '1-0' : '0-1';
       
-      const winnerId = data.winner === 'draw' ? undefined :
-                      data.winner === gameState.game?.white.username ? gameState.game?.white.id :
-                      gameState.game?.black.id;
+      let winnerId = undefined;
+      if (data.winner === gameState.game?.white.username) {
+        winnerId = gameState.game?.white.id;
+      } else if (data.winner === gameState.game?.black.username) {
+        winnerId = gameState.game?.black.id;
+      }
 
       await fetch('http://localhost:8000/api/contests/games/result', {
         method: 'POST',
@@ -169,7 +181,7 @@ export default function TournamentGamePage() {
   }, []);
 
   // Initialize socket for tournament games
-  const { isConnected, makeMove } = useChessSocket(
+  const { isConnected, makeMove, joinTournamentGame } = useChessSocket(
     undefined, // No waiting for opponent in tournaments
     handleGameFound,
     handleMoveMade,
@@ -177,6 +189,20 @@ export default function TournamentGamePage() {
     undefined, // Handle disconnection differently in tournaments
     handleError
   );
+
+  // Join tournament game when component mounts and we have all required data
+  useEffect(() => {
+    if (isConnected && gameState.game && primaryWallet && user && !gameState.isSpectating) {
+      const player = {
+        id: user.userId || primaryWallet.address,
+        name: user.username || user.email?.split('@')[0] || 'Player',
+        walletAddress: primaryWallet.address
+      };
+      
+      console.log('🏆 Joining tournament game with player data:', player);
+      joinTournamentGame(gameState.game.id, player);
+    }
+  }, [isConnected, gameState.game, primaryWallet, user, gameState.isSpectating, joinTournamentGame]);
 
   const handleMove = (move: { from: string; to: string; promotion?: string }) => {
     if (gameState.game?.id && !gameState.isSpectating) {

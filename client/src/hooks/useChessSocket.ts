@@ -35,6 +35,7 @@ interface UseChessSocketReturn {
   socket: Socket | null;
   isConnected: boolean;
   joinQueue: (player: Player) => void;
+  joinTournamentGame: (gameId: string, player: Player) => void;
   makeMove: (gameId: string, move: { from: string; to: string; promotion?: string }) => void;
   endGame: (gameId: string, winner: string, reason: string) => void;
 }
@@ -103,6 +104,11 @@ export function useChessSocket(
       callbacksRef.current.onGameFound?.(data);
     });
 
+    newSocket.on('tournament-game-ready', (data: GameFoundData) => {
+      console.log('🏆 Tournament game ready!', data);
+      callbacksRef.current.onGameFound?.(data);
+    });
+
     newSocket.on('move-made', (data: MoveData) => {
       console.log('📝 Move received:', data);
       callbacksRef.current.onMoveMade?.(data);
@@ -140,6 +146,15 @@ export function useChessSocket(
     }
   }, [isConnected]);
 
+  const joinTournamentGame = useCallback((gameId: string, player: Player) => {
+    if (socketRef.current && isConnected) {
+      console.log('🏆 Joining tournament game:', gameId, player);
+      socketRef.current.emit('join-tournament-game', { gameId, player });
+    } else {
+      console.warn('❌ Cannot join tournament game: socket not connected');
+    }
+  }, [isConnected]);
+
   const makeMove = useCallback((gameId: string, move: { from: string; to: string; promotion?: string }) => {
     if (socketRef.current && isConnected) {
       console.log('📝 Making move:', move, 'in game:', gameId);
@@ -162,6 +177,7 @@ export function useChessSocket(
     socket,
     isConnected,
     joinQueue,
+    joinTournamentGame,
     makeMove,
     endGame
   };

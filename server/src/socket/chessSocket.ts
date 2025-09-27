@@ -98,6 +98,92 @@ export function initializeChessSocket(io: Server) {
       }
     });
 
+    // Tournament game joining
+    socket.on('join-tournament-game', (data: { gameId: string; player: Omit<Player, 'socketId'> }) => {
+      console.log('🏆 Player joining tournament game:', data.gameId, data.player);
+      
+      const { gameId, player: playerData } = data;
+      const player: Player = {
+        ...playerData,
+        socketId: socket.id
+      };
+
+      // Store socket reference
+      playerSockets.set(socket.id, socket);
+      
+      // Check if game already exists in activeGames
+      let game = activeGames.get(gameId);
+      
+      if (!game) {
+        // Create new game for tournament
+        game = {
+          id: gameId,
+          white: null,
+          black: null,
+          chess: new Chess(),
+          turn: 'white',
+          status: 'waiting',
+          createdAt: new Date()
+        };
+        activeGames.set(gameId, game);
+      }
+
+      // Join player to game room
+      socket.join(gameId);
+
+      // Assign player to color based on wallet address or existing assignment
+      if (!game.white) {
+        game.white = player;
+        console.log('🤍 Player assigned as White:', player.name);
+      } else if (!game.black && game.white.walletAddress !== player.walletAddress) {
+        game.black = player;
+        console.log('🖤 Player assigned as Black:', player.name);
+      } else if (game.white.walletAddress === player.walletAddress) {
+        // Player rejoining as white
+        game.white = player;
+        console.log('🔄 White player reconnected:', player.name);
+      } else if (game.black && game.black.walletAddress === player.walletAddress) {
+        // Player rejoining as black
+        game.black = player;
+        console.log('🔄 Black player reconnected:', player.name);
+      }
+
+      // Check if both players are connected
+      if (game.white && game.black) {
+        game.status = 'active';
+        
+        // Notify both players that the game is ready
+        const whiteSocket = playerSockets.get(game.white.socketId);
+        const blackSocket = playerSockets.get(game.black.socketId);
+
+        if (whiteSocket) {
+          whiteSocket.emit('tournament-game-ready', {
+            gameId,
+            playerColor: 'white',
+            opponent: game.black,
+            board: game.chess.fen(),
+            turn: game.turn
+          });
+        }
+
+        if (blackSocket) {
+          blackSocket.emit('tournament-game-ready', {
+            gameId,
+            playerColor: 'black',
+            opponent: game.white,
+            board: game.chess.fen(),
+            turn: game.turn
+          });
+        }
+
+        console.log('🎯 Tournament game ready:', gameId, 'White:', game.white.name, 'Black:', game.black.name);
+      } else {
+        // Still waiting for the other player
+        socket.emit('waiting-for-opponent');
+        console.log('⏳ Tournament game waiting for other player:', gameId);
+      }
+    });
+
     socket.on('make-move', (data: { gameId: string; move: { from: string; to: string; promotion?: string } }) => {
       const { gameId, move } = data;
       const game = activeGames.get(gameId);
