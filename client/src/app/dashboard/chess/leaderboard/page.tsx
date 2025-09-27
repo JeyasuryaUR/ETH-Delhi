@@ -156,21 +156,6 @@ export default function LeaderboardPage() {
               </table>
             </div>
 
-            <div className="mt-8 text-center">
-              <div className="bg-primary retro-border retro-shadow p-6">
-                <h3 className="text-xl font-black font-heading mb-2 text-primary-foreground uppercase">
-                  Ready to Compete?
-                </h3>
-                <p className="text-primary-foreground mb-4">
-                  Start playing and climb your way to the top of the leaderboard!
-                </p>
-                <Link href="/">
-                  <Button size="lg" className="text-lg px-8 py-4 font-bold uppercase tracking-wider bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                    Start Playing Now
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </section>
