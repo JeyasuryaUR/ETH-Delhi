@@ -104,7 +104,8 @@ export function initializeChessSocket(io: Server) {
 
     // Tournament game joining
     socket.on('join-tournament-game', async (data: { gameId: string; player: Omit<Player, 'socketId'> }) => {
-      console.log('🏆 Player joining tournament game:', data.gameId, data.player);
+      console.log('🏆 Player joining tournament game:', data.gameId, data.player.name, data.player.walletAddress);
+      console.log('📊 Current active games:', Array.from(activeGames.keys()));
       
       const { gameId, player: playerData } = data;
       const player: Player = {
@@ -156,6 +157,7 @@ export function initializeChessSocket(io: Server) {
         let game = activeGames.get(gameId);
         
         if (!game) {
+          console.log('🆕 Creating new tournament game for ID:', gameId);
           // Create new game for tournament with proper initialization
           game = {
             id: gameId,
@@ -169,15 +171,26 @@ export function initializeChessSocket(io: Server) {
             createdAt: new Date()
           };
           activeGames.set(gameId, game);
+          console.log('✅ Game created and stored in activeGames');
+        } else {
+          console.log('🔄 Found existing game for ID:', gameId, 'Status:', game.status);
         }
 
         // Join player to game room
         socket.join(gameId);
+        console.log('🏠 Player joined game room:', gameId);
 
         // Assign player based on tournament game data (wallet address comparison)
         const playerWalletAddress = player.walletAddress.toLowerCase();
         const whiteWalletAddress = tournamentGame.white.wallet_address.toLowerCase();
         const blackWalletAddress = tournamentGame.black.wallet_address.toLowerCase();
+
+        console.log('🔍 Player assignment check:');
+        console.log('   Player wallet:', playerWalletAddress);
+        console.log('   White wallet:', whiteWalletAddress);
+        console.log('   Black wallet:', blackWalletAddress);
+        console.log('   Current white:', game.white?.name || 'none');
+        console.log('   Current black:', game.black?.name || 'none');
 
         if (playerWalletAddress === whiteWalletAddress) {
           game.white = player;
