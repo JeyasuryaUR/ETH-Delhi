@@ -46,17 +46,18 @@ model users {
 }
 
 model contests {
-  id           String    @id @default(uuid()) @db.Uuid
-  title        String
-  organizer_id String?   @db.Uuid
-  type         String
-  time_control String?
-  start_at     DateTime? @db.Timestamptz(6)
-  end_at       DateTime? @db.Timestamptz(6)
-  settings     Json?
-  status       String    @default("registration")
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  prize_pool   Int       @default(0)
+  id               String    @id @default(uuid()) @db.Uuid
+  title            String
+  organizer_id     String?   @db.Uuid
+  type             String
+  time_control     String?
+  start_at         DateTime? @db.Timestamptz(6)
+  end_at           DateTime? @db.Timestamptz(6)
+  settings         Json?
+  status           String    @default("registration")
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  prize_pool       Int       @default(0)
+  max_participants Int       @default(0)
 
   organizer    users?                 @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
   participants contest_participants[]
