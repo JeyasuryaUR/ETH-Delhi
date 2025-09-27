@@ -39,7 +39,7 @@ const ENSRegistration = ({
       });
 
       // Create user in backend
-      const response = await fetch('http://localhost:8000/api/users', {
+      const response = await fetch(API_BASE + '/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

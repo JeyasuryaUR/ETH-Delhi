@@ -37,7 +37,7 @@ interface ApiResponse<T = any> {
   meta?: any;
 }
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = API_BASE + '';
 
 export const authService = {
   // Check if user exists by wallet address

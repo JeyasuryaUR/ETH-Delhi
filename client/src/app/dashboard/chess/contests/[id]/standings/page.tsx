@@ -209,7 +209,7 @@ export default function ContestStandingsPage() {
   const fetchStandings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/standings-detailed`);
+      const response = await fetch(API_BASE + `/contests/${contestId}/standings-detailed`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch standings');

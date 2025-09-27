@@ -65,7 +65,7 @@ export default function ContestDetailPage() {
   const fetchContestDetails = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}`);
+      const response = await fetch(API_BASE + `/contests/${contestId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch contest details');
@@ -89,7 +89,7 @@ export default function ContestDetailPage() {
   // Fetch participants separately (for more control)
   const fetchParticipants = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/participants`);
+      const response = await fetch(API_BASE + `/contests/${contestId}/participants`);
       
       if (response.ok) {
         const data = await response.json();
@@ -126,7 +126,7 @@ export default function ContestDetailPage() {
 
     try {
       setIsJoining(true);
-      const response = await fetch('http://localhost:8000/api/contests/join', {
+      const response = await fetch(API_BASE + '/contests/join', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ export default function ContestDetailPage() {
   const handleStartContest = async () => {
     try {
       setIsStarting(true);
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/start-tournament`, {
+      const response = await fetch(API_BASE + `/contests/${contestId}/start-tournament`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

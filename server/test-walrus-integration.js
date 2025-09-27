@@ -1,7 +1,7 @@
 // Test script for Walrus integration
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:8000/api/ratings';
+const BASE_URL = API_BASE + '/ratings';
 
 async function testWalrusIntegration() {
   console.log('🧪 Testing Walrus Integration for Chess Ratings\n');

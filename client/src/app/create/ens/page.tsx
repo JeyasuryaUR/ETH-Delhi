@@ -5,6 +5,7 @@ import { Button } from '@/components/retroui/Button';
 import toast from 'react-hot-toast';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useUser } from '@/components/ClientWrapper';
+import { API_BASE } from '@/lib/config';
 
 const CreateENSPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -84,7 +85,7 @@ const CreateENSPage = () => {
         lichess_id: lichessId || null,
       };
 
-      const response = await fetch('http://localhost:8000/api/users', {
+      const response = await fetch(API_BASE + '/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -50,7 +50,7 @@ const WalletRedirectHandler = ({ children }: { children: ReactNode }) => {
   const checkUserExists = async (walletAddress: string) => {
     try {
       setIsCheckingUser(true);
-      const response = await fetch(`http://localhost:8000/api/users/wallet/${walletAddress}`);
+      const response = await fetch(API_BASE + `/users/wallet/${walletAddress}`);
       const result = await response.json();
       
       if (result.success) {

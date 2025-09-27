@@ -45,7 +45,7 @@ export default function ContestPairingsPage() {
   const fetchPairings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/pairings`);
+      const response = await fetch(API_BASE + `/contests/${contestId}/pairings`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch pairings');

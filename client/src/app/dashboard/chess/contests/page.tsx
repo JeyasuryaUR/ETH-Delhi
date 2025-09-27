@@ -31,7 +31,7 @@ export default function ContestPage() {
       setIsLoading(true);
       console.log('Fetching tournaments from backend...');
       
-      const response = await fetch('http://localhost:8000/api/contests');
+      const response = await fetch(API_BASE + '/contests');
       console.log('Response status:', response.status);
       
       if (!response.ok) {

@@ -172,7 +172,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
     try {
       const contestType = getContestType(formData.timeControl);
       
-      const response = await fetch('http://localhost:8000/api/contests', {
+      const response = await fetch(API_BASE + '/contests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

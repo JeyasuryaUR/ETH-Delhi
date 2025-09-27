@@ -91,7 +91,7 @@ export default function TournamentGamePage() {
   // Fetch game details
   const fetchGameDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/contests/games/${gameId}`);
+      const response = await fetch(API_BASE + `/contests/games/${gameId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch game details');
@@ -188,7 +188,7 @@ export default function TournamentGamePage() {
         winnerId = gameState.game?.black.id;
       }
 
-      await fetch('http://localhost:8000/api/contests/games/result', {
+      await fetch(API_BASE + '/contests/games/result', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
