@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id                      String   @id @default(uuid()) @db.Uuid
+  username                String   @unique
+  display_name            String?
+  email                   String?  @unique
+  created_at              DateTime @default(now()) @db.Timestamptz(6)
+  is_active               Boolean  @default(true)
+  wallet_address          String?  @unique
+  ens_name                String?  @unique
+  ens_namehash            String?
+  ens_resolver            String?
+  ens_owner_address       String?
+  ens_registered          Boolean  @default(false)
+  ens_verified            Boolean  @default(false)
+  ens_verified_at         DateTime? @db.Timestamptz(6)
+  ens_metadata            Json?
+  rating_cached           Int      @default(1200)
+  rating_type_cached      String   @default("standard")
+  rating_cached_updated_at DateTime @default(now()) @db.Timestamptz(6)
+  metadata                Json?
+
+  contests                contests[]        @relation("UserContests")
+  games_white             games[]           @relation("WhiteUser")
+  games_black             games[]           @relation("BlackUser")
+  games_won               games[]           @relation("WinnerUser")
+  participants            contest_participants[]
+  ratings_history         ratings_history[]
+
+  @@map("users")
+}
+
+model contests {
+  id           String    @id @default(uuid()) @db.Uuid
+  title        String
+  organizer_id String?   @db.Uuid
+  type         String
+  time_control String?
+  start_at     DateTime? @db.Timestamptz(6)
+  end_at       DateTime? @db.Timestamptz(6)
+  settings     Json?
+  status       String    @default("registration")
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+
+  organizer users? @relation("UserContests", fields: [organizer_id], references: [id], onDelete: SetNull)
+  participants contest_participants[]
+  games games[]
+
+  @@map("contests")
+  @@index([status], map: "idx_contests_status")
+}
+
+model contest_participants {
+  id         String    @id @default(uuid()) @db.Uuid
+  contest_id String    @db.Uuid
+  user_id    String    @db.Uuid
+  seed       Int?
+  score      Decimal   @default(0)
+  tiebreaks  Json?
+  joined_at  DateTime  @default(now()) @db.Timestamptz(6)
+
+  contest contests @relation(fields: [contest_id], references: [id], onDelete: Cascade)
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([contest_id, user_id])
+  @@index([contest_id], map: "idx_participants_contest")
+  @@map("contest_participants")
+}
+
+model games {
+  id                  String    @id @default(uuid()) @db.Uuid
+  contest_id          String?   @db.Uuid
+  white_id            String?   @db.Uuid
+  black_id            String?   @db.Uuid
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  started_at          DateTime? @db.Timestamptz(6)
+  ended_at            DateTime? @db.Timestamptz(6)
+  result              String?
+  winner_id           String?   @db.Uuid
+  termination         String?
+  move_count          Int?
+  pgn                 String?
+  moves               Json?
+  time_control        String?
+  rated               Boolean   @default(false)
+  variant             String    @default("standard")
+  initial_fen         String    @default("startpos")
+  white_rating_before Int?
+  black_rating_before Int?
+  white_rating_after  Int?
+  black_rating_after  Int?
+  metadata            Json?
+
+  contest contests? @relation(fields: [contest_id], references: [id], onDelete: SetNull)
+  white   users?    @relation("WhiteUser", fields: [white_id], references: [id], onDelete: SetNull)
+  black   users?    @relation("BlackUser", fields: [black_id], references: [id], onDelete: SetNull)
+  winner  users?    @relation("WinnerUser", fields: [winner_id], references: [id], onDelete: SetNull)
+  game_moves game_moves[]
+  ratings_onchain ratings_onchain[]
+  rating_attestations rating_attestations[]
+
+  @@map("games")
+  @@index([white_id, black_id], map: "idx_games_players")
+  @@index([contest_id], map: "idx_games_contest")
+  @@index([started_at(sort: Desc)], map: "idx_games_started_at")
+}
+
+model game_moves {
+  id          String   @id @default(uuid()) @db.Uuid
+  game_id     String   @db.Uuid
+  ply         Int
+  move_number Int
+  color       String   @db.Char(1)
+  san         String?
+  uci         String?
+  from_sq     String?
+  to_sq       String?
+  promotion   String?  @db.Char(1)
+  time_ms     Int?
+  comment     String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  game games @relation(fields: [game_id], references: [id], onDelete: Cascade)
+
+  @@unique([game_id, ply], map: "ux_game_ply")
+  @@index([game_id, ply], map: "idx_game_moves_game_ply")
+  @@map("game_moves")
+}
+
+model ratings_history {
+  id           String    @id @default(uuid()) @db.Uuid
+  user_id      String    @db.Uuid
+  rating_type  String
+  rating       Int
+  source       String?
+  recorded_at  DateTime  @default(now()) @db.Timestamptz(6)
+  metadata     Json?
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, rating_type, recorded_at(sort: Desc)], map: "idx_ratings_user")
+  @@map("ratings_history")
+}
+
+model ratings_onchain {
+  id                String    @id @default(uuid()) @db.Uuid
+  wallet_address    String
+  rating_type       String
+  rating_value      Int
+  tx_hash           String    @unique
+  block_number      BigInt?
+  log_index         Int?
+  operator_address  String?
+  submitted_at      DateTime  @default(now()) @db.Timestamptz(6)
+  onchain_payload   Json?
+  verified          Boolean   @default(false)
+  verified_at       DateTime? @db.Timestamptz(6)
+  source_game_id    String?   @db.Uuid
+  metadata          Json?
+
+  source_game games? @relation(fields: [source_game_id], references: [id], onDelete: SetNull)
+
+  @@map("ratings_onchain")
+}
+
+model rating_attestations {
+  id               String    @id @default(uuid()) @db.Uuid
+  wallet_address   String
+  rating_type      String
+  rating_value     Int
+  signer_address   String
+  signature        String
+  attested_at      DateTime  @default(now()) @db.Timestamptz(6)
+  consumed         Boolean   @default(false)
+  consumed_tx_hash String?
+  source_game_id   String?   @db.Uuid
+  metadata         Json?
+
+  source_game games? @relation(fields: [source_game_id], references: [id], onDelete: SetNull)
+
+  @@map("rating_attestations")
+}
+
+model ens_events {
+  id          String    @id @default(uuid()) @db.Uuid
+  ens_name    String
+  namehash    String?
+  event_type  String
+  tx_hash     String?
+  block_number BigInt?
+  log_index   Int?
+  payload     Json?
+  observed_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([namehash], map: "idx_ens_events_namehash")
+  @@map("ens_events")
+}
+
+model ens_attestations {
+  id                   String    @id @default(uuid()) @db.Uuid
+  ens_name             String
+  wallet_address       String
+  signer_address       String
+  signature            String
+  attestation_payload  Json?
+  consumed             Boolean   @default(false)
+  consumed_tx          String?
+  created_at           DateTime  @default(now()) @db.Timestamptz(6)
+  @@map("ens_attestations")
+}

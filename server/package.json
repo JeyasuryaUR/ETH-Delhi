@@ -1,24 +1,38 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "main": "dist/app.js",
   "scripts": {
-    "start": "node dist/server.js",
-    "dev": "nodemon --watch src --exec ts-node src/server.ts",
-    "build": "tsc"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "express": "^5.1.0"
-  },
+  "type": "commonjs",
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "@types/cors": "^2.8.19",
+    "@types/socket.io": "^3.0.1",
+    "bcryptjs": "^3.0.2",
+    "chess.js": "^1.4.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "prisma": "^6.16.2",
+    "socket.io": "^4.8.1"
   }
 }
