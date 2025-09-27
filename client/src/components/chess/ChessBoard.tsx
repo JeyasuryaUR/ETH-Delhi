@@ -50,28 +50,9 @@ export function ChessBoard({ position, playerColor, onMove, onGameEnd }: ChessBo
     }
   }, [position]);
 
-  // Check for game end
-  useEffect(() => {
-    if (game.isGameOver()) {
-      let winner = 'Draw';
-      let reason = '';
-
-      if (game.isCheckmate()) {
-        winner = game.turn() === 'w' ? 'Black' : 'White';
-        reason = 'Checkmate';
-      } else if (game.isStalemate()) {
-        reason = 'Stalemate';
-      } else if (game.isThreefoldRepetition()) {
-        reason = 'Threefold Repetition';
-      } else if (game.isInsufficientMaterial()) {
-        reason = 'Insufficient Material';
-      } else if (game.isDraw()) {
-        reason = 'Draw';
-      }
-
-      onGameEnd(winner, reason, game.fen(), game.history());
-    }
-  }, [game, onGameEnd]);
+  // Note: Game end detection is now handled server-side only to prevent duplicates
+  // The server will emit 'game-completed' when a game ends
+  // This prevents race conditions and duplicate database saves
 
   const getSquareColor = (row: number, col: number): string => {
     const isLight = (row + col) % 2 === 0;

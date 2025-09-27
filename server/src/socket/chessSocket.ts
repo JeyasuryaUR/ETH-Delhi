@@ -19,6 +19,7 @@ interface ChessGame {
   winner?: string;
   winReason?: string;
   createdAt: Date;
+  savedToDatabase?: boolean; // Flag to prevent duplicate saves
 }
 
 // In-memory storage for games (in production, use a proper database)
@@ -181,8 +182,9 @@ export function initializeChessSocket(io: Server) {
         });
 
         // If game ended, save to database and broadcast completion
-        if (gameEnded) {
-          // Save game to database
+        if (gameEnded && !game.savedToDatabase) {
+          // Save game to database (only if not already saved)
+          game.savedToDatabase = true;
           saveGameToDatabase(game, result, winReason);
 
           io.to(gameId).emit('game-completed', {
@@ -229,8 +231,11 @@ export function initializeChessSocket(io: Server) {
           result = `Draw - ${reason}`;
         }
 
-        // Save game to database
-        saveGameToDatabase(game, result, reason);
+        // Save game to database (only if not already saved)
+        if (!game.savedToDatabase) {
+          game.savedToDatabase = true;
+          saveGameToDatabase(game, result, reason);
+        }
 
         // Broadcast game end to both players
         io.to(gameId).emit('game-completed', {
@@ -298,7 +303,11 @@ async function saveGameToDatabase(game: ChessGame, result: string, winReason: st
     }) : null;
 
     if (!whiteUser || !blackUser) {
-      console.error('❌ Could not find users in database for game:', game.id);
+      console.error('❌ Could not find users in database for game:', game);
+      console.log('📋 Game details:');
+      console.error('Game ID:', game.id);
+      console.error('White user:', game.white?.walletAddress || "");
+      console.error('Black user:', game.black?.walletAddress || "");
       return null;
     }
 

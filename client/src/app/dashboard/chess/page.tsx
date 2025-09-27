@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/retroui/Button';
 import { ChessBoard } from '@/components/chess/ChessBoard';
 import { useChessSocket } from '@/hooks/useChessSocket';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { motion } from 'framer-motion';
 
 interface Player {
@@ -27,6 +28,7 @@ interface GameState {
 
 export default function ChessPage() {
   const router = useRouter();
+  const { primaryWallet, user } = useDynamicContext();
   const [gameState, setGameState] = useState<GameState>({
     status: 'waiting',
     player: null,
@@ -120,18 +122,21 @@ export default function ChessPage() {
     handleError
   );
 
-  // Mock wallet connection - in real implementation this would come from your auth system
+  // Get user data from connected Dynamic wallet
   useEffect(() => {
-    // Simulate getting user data after wallet connection
-    setGameState(prev => ({
-      ...prev,
-      player: {
-        id: 'user_' + Math.random().toString(36).substring(7),
-        name: 'Player 1',
-        walletAddress: '0x1234567890abcdef1234567890abcdef12345678'
-      }
-    }));
-  }, []);
+    if (primaryWallet && user) {
+      // Use actual wallet data instead of hardcoded values
+      // console.log("User:", user);
+      setGameState(prev => ({
+        ...prev,
+        player: {
+          id: user.userId || 'user_' + Math.random().toString(36).substring(7),
+          name: user.firstName || user.email || 'Player 1',
+          walletAddress: primaryWallet.address
+        }
+      }));
+    }
+  }, [primaryWallet, user]);
 
   const handleStartGame = async () => {
     if (gameState.player && isConnected) {
