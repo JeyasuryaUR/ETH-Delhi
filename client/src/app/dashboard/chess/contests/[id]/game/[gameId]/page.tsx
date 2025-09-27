@@ -8,10 +8,12 @@ import { useChessSocket } from '@/hooks/useChessSocket';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, User, Trophy } from 'lucide-react';
+import { useUser } from '@/components/ClientWrapper';
 
 interface Player {
   id: string;
   username: string;
+  wallet_address?: string;
   display_name: string;
   rating_cached: number;
 }
@@ -46,6 +48,7 @@ export default function TournamentGamePage() {
   const router = useRouter();
   const params = useParams();
   const { primaryWallet, user } = useDynamicContext();
+  const { userData } = useUser();
   
   const contestId = params.id as string;
   const gameId = params.gameId as string;
@@ -64,6 +67,27 @@ export default function TournamentGamePage() {
     isPlayerReady: false
   });
 
+  // Add effect to update game state when wallet info becomes available
+  useEffect(() => {
+    if (primaryWallet && gameState.game) {
+      const userWalletAddress = primaryWallet.address.toLowerCase();
+      console.log('User wallet address:', userWalletAddress);
+      console.log('Game players:', gameState.game);
+      const isPlayerInGame = 
+        gameState.game.white.wallet_address?.toLowerCase() === userWalletAddress || 
+        gameState.game.black.wallet_address?.toLowerCase() === userWalletAddress;
+      
+      const playerColor = isPlayerInGame ? 
+        (gameState.game.white.wallet_address?.toLowerCase() === userWalletAddress ? 'white' : 'black') : null;
+
+      setGameState(prev => ({
+        ...prev,
+        playerColor,
+        isSpectating: !isPlayerInGame
+      }));
+    }
+  }, [primaryWallet, gameState.game]);
+
   // Fetch game details
   const fetchGameDetails = async () => {
     try {
@@ -76,24 +100,12 @@ export default function TournamentGamePage() {
       const data = await response.json();
       
       if (data.success && data.data) {
-        const game = data.data;
-        // Use wallet address comparison instead of user ID
-        const userWalletAddress = primaryWallet?.address?.toLowerCase();
-        const isPlayerInGame = userWalletAddress && (
-          game.white.wallet_address?.toLowerCase() === userWalletAddress || 
-          game.black.wallet_address?.toLowerCase() === userWalletAddress
-        );
-        
-        const playerColor = isPlayerInGame ? 
-          (game.white.wallet_address?.toLowerCase() === userWalletAddress ? 'white' : 'black') : null;
-
+        const game = await data.data;
         setGameState(prev => ({
           ...prev,
           status: game.result ? 'finished' : 'ready',
           game,
           board: game.board || prev.board,
-          playerColor,
-          isSpectating: !isPlayerInGame,
           winner: game.result === '1-0' ? game.white.username : 
                  game.result === '0-1' ? game.black.username : 
                  game.result === '1/2-1/2' ? 'Draw' : null,

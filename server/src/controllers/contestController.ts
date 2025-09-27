@@ -1194,6 +1194,7 @@ export const getGameDetails = async (req: Request, res: Response) => {
           select: {
             id: true,
             username: true,
+            wallet_address: true,
             display_name: true,
             rating_cached: true
           }
@@ -1202,6 +1203,7 @@ export const getGameDetails = async (req: Request, res: Response) => {
           select: {
             id: true,
             username: true,
+            wallet_address: true,
             display_name: true,
             rating_cached: true
           }
