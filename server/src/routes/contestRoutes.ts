@@ -12,7 +12,12 @@ import {
   completeTournamentRound,
   getTournamentStandings,
   completeSwissTournament,
-  getTournamentRounds
+  getTournamentRounds,
+  getCurrentRoundPairings,
+  submitGameResult,
+  getContestStandings,
+  forceAdvanceRound,
+  getGameDetails
 } from '../controllers/contestController';
 
 const router = express.Router();
@@ -53,6 +58,21 @@ router.get('/:contestId/standings', getTournamentStandings);
 
 // Get tournament rounds
 router.get('/:contestId/rounds', getTournamentRounds);
+
+// Get current round pairings
+router.get('/:id/pairings', getCurrentRoundPairings);
+
+// Get contest standings (enhanced)
+router.get('/:id/standings-detailed', getContestStandings);
+
+// Submit game result
+router.post('/games/result', submitGameResult);
+
+// Force advance round (for testing/admin)
+router.post('/:id/advance-round', forceAdvanceRound);
+
+// Get game details
+router.get('/games/:gameId', getGameDetails);
 
 // Complete Swiss tournament
 router.post('/:contestId/complete-tournament', completeSwissTournament);

@@ -1010,3 +1010,249 @@ export const getTournamentRounds = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Get current round pairings for a contest
+export const getCurrentRoundPairings = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    const pairings = await SwissTournamentService.getCurrentRoundPairings(id);
+    
+    if (!pairings) {
+      return res.status(404).json({
+        success: false,
+        message: 'No active round found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: pairings,
+    });
+  } catch (err: any) {
+    console.error('getCurrentRoundPairings error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Submit game result for tournament games
+export const submitGameResult = async (req: Request, res: Response) => {
+  try {
+    const { gameId, result, winnerId } = req.body;
+
+    if (!gameId || !result) {
+      return res.status(400).json({
+        success: false,
+        message: 'Game ID and result are required',
+      });
+    }
+
+    // Validate result format
+    const validResults = ['1-0', '0-1', '1/2-1/2'];
+    if (!validResults.includes(result)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid result format. Must be 1-0, 0-1, or 1/2-1/2',
+      });
+    }
+
+    await SwissTournamentService.submitGameResult(gameId, result, winnerId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Game result submitted successfully',
+    });
+  } catch (err: any) {
+    console.error('submitGameResult error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Get tournament standings (enhanced from existing)
+export const getContestStandings = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    const participants = await SwissTournamentService.getContestParticipants(id);
+    
+    const contest = await prisma.contests.findUnique({
+      where: { id },
+      select: {
+        title: true,
+        status: true,
+        current_round: true,
+        total_rounds: true,
+        end_at: true
+      }
+    });
+
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contest not found',
+      });
+    }
+
+    // Format standings data
+    const standings = participants.map((participant, index) => ({
+      rank: index + 1,
+      ensAddress: participant.username, // Assuming username is ENS
+      rating: participant.rating,
+      points: participant.score,
+      wins: participant.wins,
+      losses: participant.losses,
+      draws: participant.draws,
+      buchholz: participant.buchholzScore,
+      sonnebornBerger: participant.sonnebornBerger
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        contestName: contest.title,
+        contestStatus: contest.status,
+        currentRound: contest.current_round,
+        totalRounds: contest.total_rounds,
+        totalParticipants: participants.length,
+        endDate: contest.end_at,
+        standings
+      }
+    });
+  } catch (err: any) {
+    console.error('getContestStandings error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Force advance round (for testing/admin)
+export const forceAdvanceRound = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contest ID is required',
+      });
+    }
+
+    const advanced = await SwissTournamentService.checkAndAdvanceRound(id);
+
+    return res.status(200).json({
+      success: true,
+      data: { advanced },
+      message: advanced ? 'Round advanced successfully' : 'Round not ready to advance'
+    });
+  } catch (err: any) {
+    console.error('forceAdvanceRound error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Get individual game details
+export const getGameDetails = async (req: Request, res: Response) => {
+  try {
+    const { gameId } = req.params;
+
+    if (!gameId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Game ID is required',
+      });
+    }
+
+    const game = await prisma.games.findUnique({
+      where: { id: gameId },
+      include: {
+        white: {
+          select: {
+            id: true,
+            username: true,
+            display_name: true,
+            rating_cached: true
+          }
+        },
+        black: {
+          select: {
+            id: true,
+            username: true,
+            display_name: true,
+            rating_cached: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            display_name: true
+          }
+        },
+        contest: {
+          select: {
+            id: true,
+            title: true,
+            current_round: true,
+            total_rounds: true
+          }
+        }
+      }
+    });
+
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found',
+      });
+    }
+
+    // Get current board position (FEN)
+    let boardPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; // Starting position
+    if (game.moves && Array.isArray(game.moves)) {
+      // If moves are stored, we could reconstruct the board position
+      // For now, use initial position or stored position
+      if (game.initial_fen && game.initial_fen !== 'startpos') {
+        boardPosition = game.initial_fen;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...game,
+        board: boardPosition
+      }
+    });
+  } catch (err: any) {
+    console.error('getGameDetails error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+};

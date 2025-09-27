@@ -100,7 +100,7 @@ export class SwissTournamentService {
 
     const opponents: Record<string, string[]> = {};
     
-    games.forEach(game => {
+    games.forEach((game: any) => {
       if (game.white_id && game.black_id) {
         if (!opponents[game.white_id]) opponents[game.white_id] = [];
         if (!opponents[game.black_id]) opponents[game.black_id] = [];
@@ -184,46 +184,96 @@ export class SwissTournamentService {
   }
 
   /**
-   * Pair players within a score group
+   * Pair players within a score group using Dutch system
    */
   private static pairPlayersInGroup(players: Player[], roundNumber: number): Pairing[] {
     const pairings: Pairing[] = [];
-    const unpaired = [...players];
+    let unpaired = [...players];
 
-    while (unpaired.length > 1) {
-      const player1 = unpaired.shift()!;
+    // Handle odd number of players first (give bye to lowest rated)
+    if (unpaired.length % 2 === 1) {
+      // Find the lowest-rated player who hasn't had a bye yet
+      let byePlayerIndex = unpaired.length - 1;
+      for (let i = unpaired.length - 1; i >= 0; i--) {
+        if (unpaired[i].byes === 0) {
+          byePlayerIndex = i;
+          break;
+        }
+      }
+      
+      const byePlayer = unpaired.splice(byePlayerIndex, 1)[0];
+      pairings.push({ white: byePlayer, black: byePlayer, boardNumber: 0 });
+    }
+
+    // Dutch system pairing: top half vs bottom half
+    const half = Math.floor(unpaired.length / 2);
+    const topHalf = unpaired.slice(0, half);
+    const bottomHalf = unpaired.slice(half);
+
+    for (let i = 0; i < topHalf.length && i < bottomHalf.length; i++) {
+      const player1 = topHalf[i];
       let bestOpponent: Player | null = null;
       let bestOpponentIndex = -1;
-      let minPreviousMeetings = Infinity;
+      let bestScore = Infinity;
 
-      // Find the best opponent (one with least previous meetings)
-      for (let i = 0; i < unpaired.length; i++) {
-        const player2 = unpaired[i];
-        const previousMeetings = this.countPreviousMeetings(player1, player2);
+      // Find best opponent from bottom half
+      for (let j = 0; j < bottomHalf.length; j++) {
+        const player2 = bottomHalf[j];
         
-        if (previousMeetings < minPreviousMeetings) {
-          minPreviousMeetings = previousMeetings;
+        // Skip if they've played before
+        if (this.countPreviousMeetings(player1, player2) > 0) {
+          continue;
+        }
+
+        // Calculate pairing score (prefer closer ratings and color balance)
+        let score = Math.abs(player1.rating - player2.rating) / 100;
+        
+        // Add color preference penalty
+        const player1WhiteGames = this.countWhiteGames(player1);
+        const player1BlackGames = this.countBlackGames(player1);
+        const player2WhiteGames = this.countWhiteGames(player2);
+        const player2BlackGames = this.countBlackGames(player2);
+        
+        // Prefer giving white to player who has had fewer white games
+        if (player1WhiteGames <= player1BlackGames && player2WhiteGames > player2BlackGames) {
+          score -= 0.5; // Bonus for good color distribution
+        } else if (player1WhiteGames > player1BlackGames && player2WhiteGames <= player2BlackGames) {
+          score += 0.5; // Penalty for poor color distribution
+        }
+
+        if (score < bestScore) {
+          bestScore = score;
           bestOpponent = player2;
-          bestOpponentIndex = i;
+          bestOpponentIndex = j;
         }
       }
 
       if (bestOpponent && bestOpponentIndex >= 0) {
-        // Remove the selected opponent from unpaired
-        unpaired.splice(bestOpponentIndex, 1);
+        // Remove the selected opponent from bottom half
+        bottomHalf.splice(bestOpponentIndex, 1);
         
-        // Determine who plays white (higher rating or random if equal)
-        const white = player1.rating >= bestOpponent.rating ? player1 : bestOpponent;
-        const black = player1.rating >= bestOpponent.rating ? bestOpponent : player1;
+        // Determine colors based on color balance
+        const player1WhiteGames = this.countWhiteGames(player1);
+        const player1BlackGames = this.countBlackGames(player1);
+        const player2WhiteGames = this.countWhiteGames(bestOpponent);
+        const player2BlackGames = this.countBlackGames(bestOpponent);
         
-        pairings.push({ white, black, boardNumber: 0 }); // boardNumber will be set later
+        let white: Player, black: Player;
+        
+        if (player1WhiteGames < player1BlackGames) {
+          white = player1;
+          black = bestOpponent;
+        } else if (player2WhiteGames < player2BlackGames) {
+          white = bestOpponent;
+          black = player1;
+        } else {
+          // Equal color distribution, use rating
+          white = player1.rating >= bestOpponent.rating ? player1 : bestOpponent;
+          black = player1.rating >= bestOpponent.rating ? bestOpponent : player1;
+        }
+        
+        pairings.push({ white, black, boardNumber: 0 });
       }
-    }
-
-    // Handle odd number of players (give bye to lowest rated unpaired player)
-    if (unpaired.length === 1) {
-      const byePlayer = unpaired[0];
-      pairings.push({ white: byePlayer, black: byePlayer, boardNumber: 0 });
     }
 
     return pairings;
@@ -236,6 +286,22 @@ export class SwissTournamentService {
     return player1.previousOpponents.filter(opponentId => 
       opponentId === player2.userId
     ).length;
+  }
+
+  /**
+   * Count white games for a player (simplified - assumes half are white)
+   */
+  private static countWhiteGames(player: Player): number {
+    const totalGames = player.wins + player.losses + player.draws;
+    return Math.floor(totalGames / 2);
+  }
+
+  /**
+   * Count black games for a player (simplified - assumes half are black)
+   */
+  private static countBlackGames(player: Player): number {
+    const totalGames = player.wins + player.losses + player.draws;
+    return Math.ceil(totalGames / 2);
   }
 
   /**
@@ -454,7 +520,7 @@ export class SwissTournamentService {
       select: { score: true }
     });
 
-    return opponentScores.reduce((sum, p) => sum + Number(p.score), 0);
+    return opponentScores.reduce((sum: number, p: any) => sum + Number(p.score), 0);
   }
 
   /**
@@ -627,9 +693,180 @@ export class SwissTournamentService {
   }
 
   /**
-   * Calculate new rating based on performance
-   * This is a simplified ELO calculation
+   * Get tournament rounds for a contest
    */
+  static async getTournamentRounds(contestId: string): Promise<any[]> {
+    return await prisma.tournament_rounds.findMany({
+      where: { contest_id: contestId },
+      include: {
+        games: {
+          include: {
+            white: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true,
+                rating_cached: true
+              }
+            },
+            black: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true,
+                rating_cached: true
+              }
+            },
+            winner: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { round_number: 'asc' }
+    });
+  }
+
+  /**
+   * Get current round pairings
+   */
+  static async getCurrentRoundPairings(contestId: string): Promise<any> {
+    const contest = await prisma.contests.findUnique({
+      where: { id: contestId },
+      select: { current_round: true, total_rounds: true, status: true }
+    });
+
+    if (!contest || contest.current_round === 0) {
+      return null;
+    }
+
+    const round = await prisma.tournament_rounds.findUnique({
+      where: {
+        contest_id_round_number: {
+          contest_id: contestId,
+          round_number: contest.current_round
+        }
+      },
+      include: {
+        games: {
+          include: {
+            white: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true,
+                rating_cached: true
+              }
+            },
+            black: {
+              select: {
+                id: true,
+                username: true,
+                display_name: true,
+                rating_cached: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      roundNumber: contest.current_round,
+      totalRounds: contest.total_rounds,
+      contestStatus: contest.status,
+      roundStatus: round?.status || 'pending',
+      pairings: round?.games || []
+    };
+  }
+
+  /**
+   * Check if current round is complete
+   */
+  static async isRoundComplete(contestId: string, roundNumber: number): Promise<boolean> {
+    const games = await prisma.games.findMany({
+      where: {
+        contest_id: contestId,
+        round_number: roundNumber
+      }
+    });
+
+    if (games.length === 0) return false;
+
+    return games.every((game: any) => game.result !== null);
+  }
+
+  /**
+   * Auto-advance to next round if current round is complete
+   */
+  static async checkAndAdvanceRound(contestId: string): Promise<boolean> {
+    const contest = await prisma.contests.findUnique({
+      where: { id: contestId },
+      select: { current_round: true, total_rounds: true, status: true }
+    });
+
+    if (!contest || contest.status !== 'active' || contest.current_round === 0) {
+      return false;
+    }
+
+    const isComplete = await this.isRoundComplete(contestId, contest.current_round);
+    
+    if (!isComplete) return false;
+
+    // Complete the current round
+    await this.completeTournamentRound(contestId, contest.current_round);
+
+    // Check if tournament is finished
+    if (contest.current_round >= (contest.total_rounds || 0)) {
+      await this.completeSwissTournament(contestId);
+      return true;
+    }
+
+    // Wait 10 seconds before starting next round (as requested)
+    setTimeout(async () => {
+      try {
+        const nextRound = contest.current_round + 1;
+        await this.startTournamentRound(contestId, nextRound);
+        
+        await prisma.contests.update({
+          where: { id: contestId },
+          data: { current_round: nextRound }
+        });
+      } catch (error) {
+        console.error('Error advancing to next round:', error);
+      }
+    }, 10000);
+
+    return true;
+  }
+
+  /**
+   * Submit game result and check for round advancement
+   */
+  static async submitGameResult(gameId: string, result: string, winnerId?: string): Promise<void> {
+    // Update the game
+    const game = await prisma.games.update({
+      where: { id: gameId },
+      data: {
+        result,
+        winner_id: winnerId,
+        ended_at: new Date()
+      }
+    });
+
+    if (!game.contest_id) return;
+
+    // Check if this was the last game of the round
+    const roundAdvanced = await this.checkAndAdvanceRound(game.contest_id);
+    
+    if (roundAdvanced) {
+      console.log(`Round ${game.round_number} completed for contest ${game.contest_id}`);
+    }
+  }
   private static async calculateNewRating(
     currentRating: number,
     wins: number,

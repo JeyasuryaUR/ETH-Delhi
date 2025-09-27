@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/retroui/Button';
 import { Card } from '@/components/retroui/Card';
+import { Users, Trophy } from 'lucide-react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useUser } from '@/components/ClientWrapper';
 
@@ -32,6 +33,7 @@ interface Contest {
   status: 'registration' | 'active' | 'completed';
   max_participants: number;
   current_round: number | null;
+  total_rounds: number | null;
   organizer: {
     id: string;
     username: string;
@@ -179,49 +181,7 @@ export default function ContestDetailPage() {
       setIsStarting(false);
     }
   };
-
-  // Leave contest function
-  const handleLeaveContest = async () => {
-    if (!user || !primaryWallet) {
-      alert('Please make sure you are logged in');
-      return;
-    }
-
-    if (!confirm('Are you sure you want to leave this contest?')) {
-      return;
-    }
-
-    try {
-      setIsLeaving(true);
-      // Note: You'll need to implement this endpoint in your backend
-      const response = await fetch(`http://localhost:8000/api/contests/${contestId}/leave`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contestId: contestId,
-          walletAddress: primaryWallet.address,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Refresh contest data to show updated participant list
-        await fetchContestDetails();
-        alert('Successfully left the contest!');
-      } else {
-        alert(data.message || 'Failed to leave contest');
-      }
-    } catch (error) {
-      console.error('Error leaving contest:', error);
-      alert('Failed to leave contest. Please try again.');
-    } finally {
-      setIsLeaving(false);
-    }
-  };
-
+  
   // Helper functions
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -242,6 +202,13 @@ export default function ContestDetailPage() {
   const isOrganizer = contest && primaryWallet && contest.organizer && 
     contest.organizer.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase();
 
+  const isUserParticipant = primaryWallet && participants.some(p => p.user.wallet_address.toLowerCase() === primaryWallet.address.toLowerCase());
+
+  // Only evaluate conditions when both wallet and contest data are ready
+  const canJoin = contest && isWalletReady && contest.status === 'registration' && !isUserParticipant && !isOrganizer;
+  const canLeave = contest && isWalletReady && contest.status === 'registration' && isUserParticipant; // Removed !isOrganizer
+  const canStart = contest && isWalletReady && contest.status === 'registration' && isOrganizer && participants.length >= 2;
+
   console.log('Debug info:', {
     contest: !!contest,
     primaryWallet: !!primaryWallet,
@@ -249,15 +216,15 @@ export default function ContestDetailPage() {
     organizerAddress: contest?.organizer?.wallet_address,
     isOrganizer,
     isWalletReady,
-    participantCount: participants.length
+    isUserParticipant,
+    participantCount: participants.length,
+    contestStatus: contest?.status,
+    canJoin,
+    canLeave,
+    canStart,
+    participantWallets: participants.map(p => p.user.wallet_address),
+    walletMatch: participants.find(p => p.user.wallet_address === primaryWallet?.address)
   });
-
-  const isUserParticipant = primaryWallet && participants.some(p => p.user.wallet_address === primaryWallet.address);
-
-  // Only evaluate conditions when both wallet and contest data are ready
-  const canJoin = contest && isWalletReady && contest.status === 'registration' && !isUserParticipant && !isOrganizer;
-  const canLeave = contest && isWalletReady && contest.status === 'registration' && isUserParticipant && !isOrganizer;
-  const canStart = contest && isWalletReady && contest.status === 'registration' && isOrganizer && participants.length >= 2;
 
   if (isLoading) {
     return (
@@ -284,7 +251,7 @@ export default function ContestDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="py-8 px-6">
+      <div className="pb-8 pt-28 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
           <Button 
@@ -352,15 +319,9 @@ export default function ContestDetailPage() {
                     )}
 
                     {canLeave && (
-                      <Button 
-                        size="lg"
-                        variant="outline"
-                        onClick={handleLeaveContest}
-                        disabled={isLeaving}
-                        className="font-bold uppercase border-red-500 text-red-500 hover:bg-red-50"
-                      >
-                        {isLeaving ? 'Leaving...' : 'Leave Contest'}
-                      </Button>
+                      <p className="text-sm text-green-600 flex items-center">
+                        Already Joined!
+                      </p>
                     )}
                     
                     {canStart && (
@@ -419,6 +380,53 @@ export default function ContestDetailPage() {
               </div>
             </div>
           </motion.div>
+
+          {/* Tournament Navigation - Show for active/completed tournaments */}
+          {(contest.status === 'active' || contest.status === 'completed') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-8"
+            >
+              <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg p-6">
+                <h2 className="text-2xl font-black text-black mb-6 flex items-center space-x-2">
+                  <span>🏆</span>
+                  <span>Tournament</span>
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => router.push(`/dashboard/chess/contests/${contestId}/pairings`)}
+                    className="bg-[#FFE81E] hover:bg-[#FFE81E]/80 text-black font-bold uppercase text-lg py-4 px-6 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    size="lg"
+                  >
+                    <Users className="mr-2 h-5 w-5" />
+                    {contest.status === 'active' ? 'Current Round Pairings' : 'Final Round Results'}
+                  </Button>
+                  
+                  <Button
+                    onClick={() => router.push(`/dashboard/chess/contests/${contestId}/standings`)}
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold uppercase text-lg py-4 px-6 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    size="lg"
+                  >
+                    <Trophy className="mr-2 h-5 w-5" />
+                    {contest.status === 'active' ? 'Current Standings' : 'Final Standings'}
+                  </Button>
+                </div>
+
+                {contest.status === 'active' && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-flex items-center space-x-2 bg-yellow-100 border-2 border-yellow-300 rounded-lg px-4 py-2">
+                      <span className="text-yellow-800 font-bold text-sm">
+                        Round {contest.current_round || 1} of {contest.total_rounds || 0} • Tournament in Progress
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Participants List */}
           <motion.div
