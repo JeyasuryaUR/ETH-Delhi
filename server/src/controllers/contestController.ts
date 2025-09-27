@@ -13,7 +13,7 @@ export const createContest = async (req: Request, res: Response) => {
       prizePool,
       maxParticipants,
       totalRounds,
-      organizerId,
+      organizerWalletAddress,
       settings
     } = req.body ?? {};
 
@@ -124,6 +124,24 @@ export const createContest = async (req: Request, res: Response) => {
       });
     }
 
+    // Look up organizer by wallet address if provided
+    let organizerId = null;
+    if (organizerWalletAddress) {
+      const organizer = await prisma.users.findUnique({
+        where: { wallet_address: organizerWalletAddress },
+        select: { id: true, username: true, display_name: true }
+      });
+
+      if (!organizer) {
+        return res.status(404).json({
+          success: false,
+          message: 'Organizer wallet address not found in the system',
+        });
+      }
+
+      organizerId = organizer.id;
+    }
+
     // Create contest
     const contest = await prisma.contests.create({
       data: {
@@ -132,7 +150,7 @@ export const createContest = async (req: Request, res: Response) => {
         time_control: timeControl || null,
         start_at: start,
         end_at: end,
-        organizer_id: organizerId || null,
+        organizer_id: organizerId,
         prize_pool: Math.round(Number(prizePool) * 100), // Convert to cents for integer storage
         max_participants: Number(maxParticipants),
         total_rounds: Number(totalRounds),
