@@ -4,7 +4,6 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes';
 import contestRoutes from './routes/contestRoutes';
-import contestStandingsRoutes from './routes/contestStandingsRoutes';
 import { initializeChessSocket } from './socket/chessSocket';
 
 const app = express();
@@ -29,7 +28,6 @@ app.use(express.json());
 
 app.use('/api/users', userRoutes);
 app.use('/api/contests', contestRoutes);
-app.use('/api/contests', contestStandingsRoutes);
 
 app.get('/', (_req, res) => {
   res.send('Hello, world! Chess server is running!');
