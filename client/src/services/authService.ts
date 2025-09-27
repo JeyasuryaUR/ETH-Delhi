@@ -1,3 +1,5 @@
+import { API_BASE } from "@/lib/config";
+
 interface User {
   id: string;
   username: string;
@@ -37,13 +39,11 @@ interface ApiResponse<T = any> {
   meta?: any;
 }
 
-const API_BASE_URL = API_BASE + '';
-
 export const authService = {
   // Check if user exists by wallet address
   async getUserByWallet(walletAddress: string): Promise<{ exists: boolean; user?: User }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/wallet/${walletAddress}`);
+      const response = await fetch(`${API_BASE}/users/wallet/${walletAddress}`);
       const data: ApiResponse<User> = await response.json();
       
       if (data.success && data.data) {
@@ -62,7 +62,7 @@ export const authService = {
   // Create new user
   async createUser(userData: CreateUserData): Promise<User> {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`, {
+      const response = await fetch(`${API_BASE}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
