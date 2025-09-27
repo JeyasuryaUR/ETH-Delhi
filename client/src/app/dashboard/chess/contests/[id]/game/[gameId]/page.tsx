@@ -29,7 +29,7 @@ interface TournamentGame {
 }
 
 interface GameState {
-  status: 'loading' | 'ready' | 'playing' | 'finished';
+  status: 'loading' | 'ready' | 'waiting-for-ready' | 'playing' | 'finished';
   game: TournamentGame | null;
   board: string;
   turn: 'white' | 'black';
@@ -37,6 +37,9 @@ interface GameState {
   winner: string | null;
   winReason: string | null;
   isSpectating: boolean;
+  whiteReady: boolean;
+  blackReady: boolean;
+  isPlayerReady: boolean;
 }
 
 export default function TournamentGamePage() {
@@ -55,7 +58,10 @@ export default function TournamentGamePage() {
     playerColor: null,
     winner: null,
     winReason: null,
-    isSpectating: false
+    isSpectating: false,
+    whiteReady: false,
+    blackReady: false,
+    isPlayerReady: false
   });
 
   // Fetch game details
@@ -108,16 +114,40 @@ export default function TournamentGamePage() {
 
   // Socket event handlers for tournament games
   const handleGameFound = useCallback((data: any) => {
-    // Tournament games are already "found", this handles the ready state
-    console.log('Tournament game ready:', data);
-    setGameState(prev => ({
-      ...prev,
-      status: 'playing',
-      playerColor: data.playerColor,
-      board: data.board || prev.board,
-      turn: data.turn || 'white'
-    }));
+    console.log('Tournament game event received:', data);
+    
+    if (data.status === 'ready') {
+      // Both players joined, show ready buttons
+      setGameState(prev => ({
+        ...prev,
+        status: 'waiting-for-ready',
+        playerColor: data.playerColor,
+        board: data.board || prev.board,
+        turn: data.turn || 'white',
+        whiteReady: data.whiteReady || false,
+        blackReady: data.blackReady || false
+      }));
+    } else if (data.gameId) {
+      // Game actually started
+      setGameState(prev => ({
+        ...prev,
+        status: 'playing',
+        playerColor: data.playerColor || prev.playerColor,
+        board: data.board || prev.board,
+        turn: data.turn || 'white'
+      }));
+    }
   }, []);
+
+  const handleReadyClick = () => {
+    if (gameState.game?.id && !gameState.isPlayerReady) {
+      tournamentReady(gameState.game.id);
+      setGameState(prev => ({
+        ...prev,
+        isPlayerReady: true
+      }));
+    }
+  };
 
   const handleMoveMade = useCallback((data: { move: any; turn: 'white' | 'black'; board: string; moveHistory: string[]; check?: boolean }) => {
     setGameState(prev => ({
@@ -180,14 +210,24 @@ export default function TournamentGamePage() {
     console.error('❌ Tournament game error:', error);
   }, []);
 
+  const handleReadyUpdate = useCallback((data: { whiteReady: boolean; blackReady: boolean }) => {
+    console.log('Ready state update:', data);
+    setGameState(prev => ({
+      ...prev,
+      whiteReady: data.whiteReady,
+      blackReady: data.blackReady
+    }));
+  }, []);
+
   // Initialize socket for tournament games
-  const { isConnected, makeMove, joinTournamentGame } = useChessSocket(
+  const { isConnected, makeMove, joinTournamentGame, tournamentReady } = useChessSocket(
     undefined, // No waiting for opponent in tournaments
     handleGameFound,
     handleMoveMade,
     handleGameCompleted,
     undefined, // Handle disconnection differently in tournaments
-    handleError
+    handleError,
+    handleReadyUpdate
   );
 
   // Join tournament game when component mounts and we have all required data
@@ -282,12 +322,48 @@ export default function TournamentGamePage() {
                     ? 'bg-gray-500 text-white'
                     : gameState.status === 'playing'
                     ? 'bg-green-500 text-white'
+                    : gameState.status === 'waiting-for-ready'
+                    ? 'bg-blue-500 text-white'
                     : 'bg-yellow-400 text-black'
                 }`}>
                   {gameState.status === 'finished' ? 'Game Complete' :
-                   gameState.status === 'playing' ? 'In Progress' : 'Waiting for Players'}
+                   gameState.status === 'playing' ? 'In Progress' : 
+                   gameState.status === 'waiting-for-ready' ? 'Ready to Start' :
+                   'Waiting for Players'}
                 </div>
               </div>
+
+              {/* Ready Button Section */}
+              {gameState.status === 'waiting-for-ready' && !gameState.isSpectating && (
+                <div className="mt-4 text-center">
+                  <div className="bg-blue-50 retro-border p-4 rounded-lg mb-4">
+                    <h3 className="font-black text-lg mb-2">Ready Check</h3>
+                    <div className="flex justify-center items-center space-x-8 mb-4">
+                      <div className={`flex items-center space-x-2 ${gameState.whiteReady ? 'text-green-600' : 'text-gray-400'}`}>
+                        <span className="text-xl">♔</span>
+                        <span className="font-bold">White: {gameState.whiteReady ? '✅ Ready' : '⏳ Waiting'}</span>
+                      </div>
+                      <div className={`flex items-center space-x-2 ${gameState.blackReady ? 'text-green-600' : 'text-gray-400'}`}>
+                        <span className="text-xl">♚</span>
+                        <span className="font-bold">Black: {gameState.blackReady ? '✅ Ready' : '⏳ Waiting'}</span>
+                      </div>
+                    </div>
+                    {!gameState.isPlayerReady && (
+                      <Button
+                        onClick={handleReadyClick}
+                        className="bg-green-500 hover:bg-green-600 text-white retro-border retro-shadow font-retro font-bold px-8 py-3 text-lg"
+                      >
+                        ✅ I'M READY!
+                      </Button>
+                    )}
+                    {gameState.isPlayerReady && (
+                      <div className="bg-green-100 border-2 border-green-500 rounded-lg px-4 py-2 inline-block">
+                        <span className="text-green-700 font-bold font-retro">✅ You are ready! Waiting for opponent...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Players */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

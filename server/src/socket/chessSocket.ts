@@ -15,7 +15,9 @@ interface ChessGame {
   black: Player | null;
   chess: Chess; // Chess.js instance for game logic
   turn: 'white' | 'black';
-  status: 'waiting' | 'active' | 'completed';
+  status: 'waiting' | 'ready' | 'active' | 'completed';
+  whiteReady: boolean;
+  blackReady: boolean;
   winner?: string;
   winReason?: string;
   createdAt: Date;
@@ -65,6 +67,8 @@ export function initializeChessSocket(io: Server) {
           chess: new Chess(), // Initialize chess game
           turn: 'white',
           status: 'active',
+          whiteReady: false,
+          blackReady: false,
           createdAt: new Date()
         };
 
@@ -160,6 +164,8 @@ export function initializeChessSocket(io: Server) {
             chess: new Chess(),
             turn: 'white',
             status: 'waiting',
+            whiteReady: false,
+            blackReady: false,
             createdAt: new Date()
           };
           activeGames.set(gameId, game);
@@ -186,9 +192,9 @@ export function initializeChessSocket(io: Server) {
 
         // Check if both players are connected
         if (game.white && game.black) {
-          game.status = 'active';
+          game.status = 'ready';
           
-          // Notify both players that the game is ready
+          // Notify both players that they can now click ready
           const whiteSocket = playerSockets.get(game.white.socketId);
           const blackSocket = playerSockets.get(game.black.socketId);
 
@@ -197,6 +203,9 @@ export function initializeChessSocket(io: Server) {
               gameId,
               playerColor: 'white',
               opponent: game.black,
+              status: 'ready',
+              whiteReady: game.whiteReady,
+              blackReady: game.blackReady,
               board: game.chess.fen(),
               turn: game.turn
             });
@@ -207,12 +216,15 @@ export function initializeChessSocket(io: Server) {
               gameId,
               playerColor: 'black',
               opponent: game.white,
+              status: 'ready',
+              whiteReady: game.whiteReady,
+              blackReady: game.blackReady,
               board: game.chess.fen(),
               turn: game.turn
             });
           }
 
-          console.log('🎯 Tournament game ready:', gameId, 'White:', game.white.name, 'Black:', game.black.name);
+          console.log('🎯 Tournament game ready for both players:', gameId, 'White:', game.white.name, 'Black:', game.black.name);
         } else {
           // Still waiting for the other player
           socket.emit('waiting-for-opponent');
@@ -222,6 +234,56 @@ export function initializeChessSocket(io: Server) {
       } catch (error) {
         console.error('Error joining tournament game:', error);
         socket.emit('error', { message: 'Failed to join tournament game' });
+      }
+    });
+
+    // Player ready for tournament game
+    socket.on('tournament-ready', (data: { gameId: string }) => {
+      const { gameId } = data;
+      const game = activeGames.get(gameId);
+
+      if (!game) {
+        socket.emit('error', { message: 'Game not found' });
+        return;
+      }
+
+      // Determine player color
+      const isWhitePlayer = game.white?.socketId === socket.id;
+      const isBlackPlayer = game.black?.socketId === socket.id;
+
+      if (!isWhitePlayer && !isBlackPlayer) {
+        socket.emit('error', { message: 'You are not in this game' });
+        return;
+      }
+
+      // Set ready state
+      if (isWhitePlayer) {
+        game.whiteReady = true;
+        console.log('🤍 White player ready:', game.white?.name);
+      } else {
+        game.blackReady = true;
+        console.log('🖤 Black player ready:', game.black?.name);
+      }
+
+      // Check if both players are ready
+      if (game.whiteReady && game.blackReady) {
+        game.status = 'active';
+        
+        // Notify both players that the game has started
+        io.to(gameId).emit('tournament-game-started', {
+          gameId,
+          board: game.chess.fen(),
+          turn: game.turn
+        });
+
+        console.log('🚀 Tournament game started:', gameId);
+      } else {
+        // Notify both players about ready state update
+        io.to(gameId).emit('tournament-ready-update', {
+          gameId,
+          whiteReady: game.whiteReady,
+          blackReady: game.blackReady
+        });
       }
     });
 

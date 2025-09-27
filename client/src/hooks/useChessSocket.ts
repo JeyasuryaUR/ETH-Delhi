@@ -36,6 +36,7 @@ interface UseChessSocketReturn {
   isConnected: boolean;
   joinQueue: (player: Player) => void;
   joinTournamentGame: (gameId: string, player: Player) => void;
+  tournamentReady: (gameId: string) => void;
   makeMove: (gameId: string, move: { from: string; to: string; promotion?: string }) => void;
   endGame: (gameId: string, winner: string, reason: string) => void;
 }
@@ -46,7 +47,8 @@ export function useChessSocket(
   onMoveMade?: (data: MoveData) => void,
   onGameCompleted?: (data: GameCompletedData) => void,
   onOpponentDisconnected?: () => void,
-  onError?: (error: { message: string }) => void
+  onError?: (error: { message: string }) => void,
+  onTournamentReadyUpdate?: (data: { whiteReady: boolean; blackReady: boolean }) => void
 ): UseChessSocketReturn {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -59,7 +61,8 @@ export function useChessSocket(
     onMoveMade,
     onGameCompleted,
     onOpponentDisconnected,
-    onError
+    onError,
+    onTournamentReadyUpdate
   });
 
   // Update callbacks ref when they change
@@ -70,7 +73,8 @@ export function useChessSocket(
       onMoveMade,
       onGameCompleted,
       onOpponentDisconnected,
-      onError
+      onError,
+      onTournamentReadyUpdate
     };
   });
 
@@ -107,6 +111,17 @@ export function useChessSocket(
     newSocket.on('tournament-game-ready', (data: GameFoundData) => {
       console.log('🏆 Tournament game ready!', data);
       callbacksRef.current.onGameFound?.(data);
+    });
+
+    newSocket.on('tournament-game-started', (data: any) => {
+      console.log('🚀 Tournament game started!', data);
+      // Treat this like a game found event to start the game
+      callbacksRef.current.onGameFound?.(data);
+    });
+
+    newSocket.on('tournament-ready-update', (data: any) => {
+      console.log('📊 Tournament ready update:', data);
+      callbacksRef.current.onTournamentReadyUpdate?.(data);
     });
 
     newSocket.on('move-made', (data: MoveData) => {
@@ -155,6 +170,15 @@ export function useChessSocket(
     }
   }, [isConnected]);
 
+  const tournamentReady = useCallback((gameId: string) => {
+    if (socketRef.current && isConnected) {
+      console.log('✅ Player ready for tournament game:', gameId);
+      socketRef.current.emit('tournament-ready', { gameId });
+    } else {
+      console.warn('❌ Cannot ready up: socket not connected');
+    }
+  }, [isConnected]);
+
   const makeMove = useCallback((gameId: string, move: { from: string; to: string; promotion?: string }) => {
     if (socketRef.current && isConnected) {
       console.log('📝 Making move:', move, 'in game:', gameId);
@@ -178,6 +202,7 @@ export function useChessSocket(
     isConnected,
     joinQueue,
     joinTournamentGame,
+    tournamentReady,
     makeMove,
     endGame
   };
