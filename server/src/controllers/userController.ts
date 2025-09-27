@@ -114,4 +114,85 @@ export const getUserByWalletAddress = async (req: Request, res: Response) => {
   }
 };
 
+export const getUserGameHistory = async (req: Request, res: Response) => {
+  try {
+    const { wallet_address } = req.params;
+    const { limit = 10, offset = 0 } = req.query;
+
+    if (!wallet_address) {
+      return res.status(400).json({
+        success: false,
+        message: 'wallet_address parameter is required',
+      });
+    }
+
+    // Normalize wallet address to lowercase for consistent lookup
+    const normalizedWallet = String(wallet_address).toLowerCase();
+
+    // Find user first
+    const user = await prisma.users.findUnique({
+      where: { wallet_address: normalizedWallet },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Get user's game history
+    const games = await prisma.games.findMany({
+      where: {
+        OR: [
+          { white_id: user.id },
+          { black_id: user.id }
+        ]
+      },
+      include: {
+        white: {
+          select: {
+            username: true,
+            display_name: true,
+            wallet_address: true
+          }
+        },
+        black: {
+          select: {
+            username: true,
+            display_name: true,
+            wallet_address: true
+          }
+        },
+        winner: {
+          select: {
+            username: true,
+            display_name: true,
+            wallet_address: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      },
+      take: Number(limit),
+      skip: Number(offset)
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        games,
+        total: games.length,
+        limit: Number(limit),
+        offset: Number(offset)
+      }
+    });
+  } catch (err: any) {
+    console.error('getUserGameHistory error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 

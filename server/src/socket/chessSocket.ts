@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { Chess } from 'chess.js';
+import { prisma } from '../lib/prisma';
 
 interface Player {
   id: string;
@@ -142,6 +143,7 @@ export function initializeChessSocket(io: Server) {
         let gameEnded = false;
         let winner = 'Draw';
         let winReason = '';
+        let result = 'Draw';
 
         if (game.chess.isGameOver()) {
           gameEnded = true;
@@ -150,14 +152,19 @@ export function initializeChessSocket(io: Server) {
           if (game.chess.isCheckmate()) {
             winner = playerColor === 'white' ? game.white?.name || 'White' : game.black?.name || 'Black';
             winReason = 'Checkmate';
+            result = playerColor === 'white' ? `White won - ${game.white?.walletAddress}` : `Black won - ${game.black?.walletAddress}`;
           } else if (game.chess.isStalemate()) {
             winReason = 'Stalemate';
+            result = 'Draw - Stalemate';
           } else if (game.chess.isThreefoldRepetition()) {
             winReason = 'Threefold Repetition';
+            result = 'Draw - Threefold Repetition';
           } else if (game.chess.isInsufficientMaterial()) {
             winReason = 'Insufficient Material';
+            result = 'Draw - Insufficient Material';
           } else if (game.chess.isDraw()) {
             winReason = 'Draw';
+            result = 'Draw';
           }
 
           game.winner = winner;
@@ -173,16 +180,20 @@ export function initializeChessSocket(io: Server) {
           check: game.chess.inCheck()
         });
 
-        // If game ended, broadcast completion
+        // If game ended, save to database and broadcast completion
         if (gameEnded) {
+          // Save game to database
+          saveGameToDatabase(game, result, winReason);
+
           io.to(gameId).emit('game-completed', {
             winner,
             reason: winReason,
+            result: result,
             moveHistory: game.chess.history(),
             finalBoard: game.chess.fen()
           });
 
-          console.log('🏆 Game completed:', gameId, 'Winner:', winner, 'Reason:', winReason);
+          console.log('🏆 Game completed:', gameId, 'Winner:', winner, 'Reason:', winReason, 'Result:', result);
 
           // Clean up after 5 minutes
           setTimeout(() => {
@@ -208,15 +219,29 @@ export function initializeChessSocket(io: Server) {
         game.winner = winner;
         game.winReason = reason;
 
+        // Determine result string
+        let result = 'Draw';
+        if (winner === game.white?.name || winner === 'White') {
+          result = `White won - ${game.white?.walletAddress}`;
+        } else if (winner === game.black?.name || winner === 'Black') {
+          result = `Black won - ${game.black?.walletAddress}`;
+        } else {
+          result = `Draw - ${reason}`;
+        }
+
+        // Save game to database
+        saveGameToDatabase(game, result, reason);
+
         // Broadcast game end to both players
         io.to(gameId).emit('game-completed', {
           winner,
           reason,
+          result,
           moveHistory: game.chess.history(),
           finalBoard: game.chess.fen()
         });
 
-        console.log('🏆 Game manually ended:', gameId, 'Winner:', winner, 'Reason:', reason);
+        console.log('🏆 Game manually ended:', gameId, 'Winner:', winner, 'Reason:', reason, 'Result:', result);
         console.log('📋 Final move history:', game.chess.history());
 
         // Clean up after 5 minutes
@@ -258,6 +283,69 @@ export function initializeChessSocket(io: Server) {
 
 function generateGameId(): string {
   return 'game_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// Function to save game to database
+async function saveGameToDatabase(game: ChessGame, result: string, winReason: string) {
+  try {
+    // Find users by wallet address
+    const whiteUser = game.white ? await prisma.users.findUnique({
+      where: { wallet_address: game.white.walletAddress.toLowerCase() }
+    }) : null;
+
+    const blackUser = game.black ? await prisma.users.findUnique({
+      where: { wallet_address: game.black.walletAddress.toLowerCase() }
+    }) : null;
+
+    if (!whiteUser || !blackUser) {
+      console.error('❌ Could not find users in database for game:', game.id);
+      return null;
+    }
+
+    // Determine winner
+    let winnerId = null;
+    if (result.includes('White won')) {
+      winnerId = whiteUser.id;
+    } else if (result.includes('Black won')) {
+      winnerId = blackUser.id;
+    }
+
+    // Create game record
+    const savedGame = await prisma.games.create({
+      data: {
+        white_id: whiteUser.id,
+        black_id: blackUser.id,
+        winner_id: winnerId,
+        result: result,
+        termination: winReason,
+        move_count: game.chess.history().length,
+        pgn: game.chess.pgn(),
+        moves: game.chess.history({ verbose: true }) as any,
+        rated: true,
+        variant: 'standard',
+        initial_fen: 'startpos',
+        started_at: game.createdAt,
+        ended_at: new Date(),
+        metadata: {
+          gameId: game.id,
+          whitePlayer: {
+            name: game.white?.name,
+            walletAddress: game.white?.walletAddress
+          },
+          blackPlayer: {
+            name: game.black?.name,
+            walletAddress: game.black?.walletAddress
+          }
+        }
+      }
+    });
+
+    console.log('✅ Game saved to database:', savedGame.id, 'Result:', result);
+    return savedGame;
+  } catch (error) {
+    console.error('❌ Error saving game to database:', error);
+    return null;
+  }
 }
 
 // Export for potential use in other modules
