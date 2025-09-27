@@ -237,9 +237,9 @@ export default function StudentGlobe() {
           }}
           className="text-center mb-8 relative z-20"
         >
-          <h3 className="text-lg md:text-xl font-bold text-primary mb-2">Global Beet Farm Network</h3>
+          <h3 className="text-lg md:text-xl font-bold text-primary mb-2">Global Chess Battles</h3>
           <p className="text-sm md:text-base font-normal text-muted-foreground max-w-md mx-auto">
-            A worldwide network of Beet Harvesters 
+            Worldwide network of strategic masters competing in epic battles
           </p>
         </motion.div>
 

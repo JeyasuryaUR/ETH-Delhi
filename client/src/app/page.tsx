@@ -4,6 +4,7 @@ import { Play, Trophy } from "lucide-react"
 import StudentGlobe from "@/components/globe-demo"
 import { achievements } from "@/data/portfolio-data"
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core"
+import Link from "next/link"
 
 export default function HomePage() {
   const { setShowAuthFlow } = useDynamicContext();
@@ -29,7 +30,7 @@ export default function HomePage() {
               <div>
                 <div className="inline-block mb-6">
                   <div className="bg-secondary text-secondary-foreground px-4 py-2 retro-border retro-shadow font-retro text-xs uppercase tracking-wider">
-                    Featured Game @ GameArena
+                    Blockchain Games Platform
                   </div>
                 </div>
 
@@ -40,13 +41,13 @@ export default function HomePage() {
 
                 <div className="bg-card retro-border retro-shadow p-6 mb-8 max-w-4xl">
                   <p className="text-lg md:text-xl text-card-foreground leading-relaxed font-medium">
-                    Challenge players worldwide in{" "}
+                    CHALLENGE PLAYERS WORLDWIDE IN{" "}
                     <span className="bg-primary text-primary-foreground px-2 py-1 font-retro text-sm">
                       EPIC 1V1 BATTLES
                     </span>
                     <br />
                     <span className="font-retro text-sm mt-2 block text-muted-foreground">
-                      CHESS • CARROM • CHECKERS • AND MORE
+                      FIDE RATINGS • ENS NAMES • DAO GOVERNANCE • NFT MATCHES
                     </span>
                   </p>
                 </div>
@@ -57,10 +58,12 @@ export default function HomePage() {
                   <Play className="mr-2 h-5 w-5" />
                   Start Playing
                 </Button>
-                <Button variant="secondary" size="lg" className="text-lg px-8 py-6 font-bold uppercase tracking-wider">
-                  <Trophy className="mr-2 h-5 w-5" />
-                  Leaderboard
-                </Button>
+                <Link href="/leaderboard">
+                  <Button variant="secondary" size="lg" className="text-lg px-8 py-6 font-bold uppercase tracking-wider">
+                    <Trophy className="mr-2 h-5 w-5" />
+                    Leaderboard
+                  </Button>
+                </Link>
               </div>
 
               
@@ -95,47 +98,47 @@ export default function HomePage() {
 
       <section className="py-20 px-4 bg-background">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-6">
-              <div className="bg-secondary text-secondary-foreground px-6 py-3 retro-border retro-shadow font-retro text-sm uppercase tracking-wider">
-                Game Platform
+            <div className="text-center mb-16">
+              <div className="inline-block mb-6">
+                <div className="bg-secondary text-secondary-foreground px-6 py-3 retro-border retro-shadow font-retro text-sm uppercase tracking-wider">
+                  Blockchain Features
+                </div>
               </div>
+              <h2 className="text-3xl md:text-4xl font-black font-heading mb-6 text-foreground uppercase">
+                Revolutionary Chess Platform with Blockchain Integration
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                Experience chess like never before with{" "}
+                <span className="bg-primary text-primary-foreground px-2 py-1 font-retro text-sm">
+                  DECENTRALIZED RATING SYSTEMS
+                </span>{" "}
+                , ENS identities, DAO governance, and NFT match rewards. The future of competitive chess is here.
+              </p>
             </div>
-            <h2 className="text-3xl md:text-4xl font-black font-heading mb-6 text-foreground uppercase">
-              Where Strategy Meets Competition in Classic 1v1 Games
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Join thousands of players in{" "}
-              <span className="bg-primary text-primary-foreground px-2 py-1 font-retro text-sm">
-                INTENSE STRATEGIC BATTLES
-              </span>{" "}
-              across classic board games. From chess grandmasters to casual players, everyone finds their perfect match.
-            </p>
-          </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             <div className="bg-card retro-border retro-shadow retro-shadow-hover p-8">
               <div className="flex items-center mb-4">
                 <div className="bg-primary text-primary-foreground px-3 py-1 retro-border font-retro text-xs mr-4">
-                  LVL 99
+                  FIDE
                 </div>
-                <h3 className="text-2xl font-black font-heading text-primary uppercase">Chess Mastery</h3>
+                <h3 className="text-2xl font-black font-heading text-primary uppercase">Multi-Source Rating System</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Experience the ultimate chess battles with our advanced matchmaking system. From beginner to grandmaster
-                level, every move counts in our competitive arena.
+                Integrated rating system combining FIDE, Lichess, and Chess.com data through blockchain oracles. 
+                FIDE ratings hold the highest weight, ensuring authentic competitive rankings.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Real-time gameplay, tournament modes, and detailed analytics help you improve your strategy and climb
-                the ranks.
+                Your unified rating is stored on-chain with your ENS identity (user.chess.eth), creating a permanent 
+                record of your chess journey and achievements.
               </p>
               <div className="mt-4">
                 <div className="flex justify-between text-xs font-retro mb-1">
-                  <span>CHESS SKILL</span>
-                  <span>MAX</span>
+                  <span>FIDE WEIGHT</span>
+                  <span>60%</span>
                 </div>
                 <div className="bg-muted retro-border h-4">
-                  <div className="bg-primary h-full w-full retro-border-thin"></div>
+                  <div className="bg-primary h-full w-3/5 retro-border-thin"></div>
                 </div>
               </div>
             </div>
@@ -143,24 +146,25 @@ export default function HomePage() {
             <div className="bg-card retro-border retro-shadow retro-shadow-hover p-8">
               <div className="flex items-center mb-4">
                 <div className="bg-secondary text-secondary-foreground px-3 py-1 retro-border font-retro text-xs mr-4">
-                  LVL 85
+                  DAO
                 </div>
-                <h3 className="text-2xl font-black font-heading text-primary uppercase">Multi-Game Arena</h3>
+                <h3 className="text-2xl font-black font-heading text-primary uppercase">Decentralized Tournaments</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Beyond chess, master carrom, checkers, and other classic strategy games. Each game offers unique
-                challenges and competitive ladders.
+                Stake-based tournaments with DAO governance. Participants vote on prize distribution, and the best 
+                matches become NFT collectibles with royalty rewards for upvotes.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Cross-platform play, spectator modes, and community tournaments create an engaging gaming ecosystem.
+                Secure match storage on blockchain with dual signatures, ensuring fair play and transparent 
+                tournament management through community consensus.
               </p>
               <div className="mt-4">
                 <div className="flex justify-between text-xs font-retro mb-1">
-                  <span>GAME VARIETY</span>
-                  <span>85/100</span>
+                  <span>DAO CONSENSUS</span>
+                  <span>60%+</span>
                 </div>
                 <div className="bg-muted retro-border h-4">
-                  <div className="bg-primary h-full w-4/5 retro-border-thin"></div>
+                  <div className="bg-primary h-full w-3/5 retro-border-thin"></div>
                 </div>
               </div>
             </div>
@@ -168,18 +172,18 @@ export default function HomePage() {
 
           <div className="bg-primary retro-border-thick retro-shadow-lg p-8 text-center">
             <div className="bg-primary-foreground text-primary px-4 py-2 retro-border font-retro text-xs uppercase tracking-wider inline-block mb-4">
-              Platform Mission
+              Investment & Growth
             </div>
             <h3 className="text-2xl font-black font-heading mb-4 text-primary-foreground uppercase">
-              Our Core Mission
+              Player Investment System
             </h3>
             <p className="text-lg leading-relaxed max-w-3xl mx-auto text-primary-foreground">
-              Bringing classic strategy games to the digital age with competitive integrity and fair play. We believe
-              every player deserves a challenging opponent and a chance to prove their skills. Join our community where{" "}
+              Invest in promising chess players and earn rewards from their victories. Support rising talents while 
+              building a sustainable ecosystem where{" "}
               <span className="bg-primary-foreground text-primary px-2 py-1 font-retro text-sm">
-                STRATEGY CONQUERS ALL
+                EVERYONE WINS
               </span>
-              .
+              . Stake on players, share in their success, and help grow the chess community.
             </p>
           </div>
         </div>
