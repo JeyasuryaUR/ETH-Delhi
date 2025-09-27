@@ -58,7 +58,7 @@ export default function HomePage() {
                   <Play className="mr-2 h-5 w-5" />
                   Start Playing
                 </Button>
-                <Link href="/leaderboard">
+                <Link href="/dashboard/chess/leaderboard">
                   <Button variant="secondary" size="lg" className="text-lg px-8 py-6 font-bold uppercase tracking-wider">
                     <Trophy className="mr-2 h-5 w-5" />
                     Leaderboard

@@ -61,3 +61,5 @@ Thumbs.db
 *.cache
 .nyc_output/
 # End of Selection
+
+/src/generated/prisma
