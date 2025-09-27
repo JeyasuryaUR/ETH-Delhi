@@ -199,8 +199,21 @@ export default function TournamentGamePage() {
         walletAddress: primaryWallet.address
       };
       
-      console.log('🏆 Joining tournament game with player data:', player);
+      console.log('🏆 Attempting to join tournament game with player data:', {
+        gameId: gameState.game.id,
+        player,
+        gameState: gameState.status,
+        isSpectating: gameState.isSpectating
+      });
       joinTournamentGame(gameState.game.id, player);
+    } else {
+      console.log('⏳ Waiting for conditions to join tournament game:', {
+        isConnected,
+        hasGame: !!gameState.game,
+        hasPrimaryWallet: !!primaryWallet,
+        hasUser: !!user,
+        isSpectating: gameState.isSpectating
+      });
     }
   }, [isConnected, gameState.game, primaryWallet, user, gameState.isSpectating, joinTournamentGame]);
 
@@ -272,7 +285,7 @@ export default function TournamentGamePage() {
                     : 'bg-yellow-400 text-black'
                 }`}>
                   {gameState.status === 'finished' ? 'Game Complete' :
-                   gameState.status === 'playing' ? 'In Progress' : 'Ready to Start'}
+                   gameState.status === 'playing' ? 'In Progress' : 'Waiting for Players'}
                 </div>
               </div>
 
