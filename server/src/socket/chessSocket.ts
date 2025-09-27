@@ -113,11 +113,23 @@ export function initializeChessSocket(io: Server) {
       
       try {
         // Fetch tournament game data from database to get correct color assignments
-        const tournamentGame = await prisma.tournament_games.findUnique({
+        const tournamentGame = await prisma.games.findUnique({
           where: { id: gameId },
           include: {
-            white: true,
-            black: true
+            white: {
+              select: {
+                id: true,
+                username: true,
+                wallet_address: true
+              }
+            },
+            black: {
+              select: {
+                id: true,
+                username: true,
+                wallet_address: true
+              }
+            }
           }
         });
 
