@@ -479,7 +479,7 @@ export const joinContest = async (req: Request, res: Response) => {
 
     // Fetch user by wallet address
     const user = await prisma.users.findUnique({
-      where: { wallet_address: walletAddress }
+      where: { wallet_address: walletAddress.toLowerCase() }
     });
 
     if (!user) {
