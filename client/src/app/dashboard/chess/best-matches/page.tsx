@@ -3,11 +3,14 @@ import { Button } from "@/components/ui/retro-button"
 import { ArrowLeft, Trophy, Medal, Award, Crown, Target } from "lucide-react"
 import Link from "next/link"
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic'
+
 // Mock best matches data
 const bestMatches = [
   {
     id: 1,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "chessmaster.eth",
       rating: 2450,
@@ -22,7 +25,7 @@ const bestMatches = [
   },
   {
     id: 2,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "strategist.eth",
       rating: 2320,
@@ -37,7 +40,7 @@ const bestMatches = [
   },
   {
     id: 3,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "pawnpusher.eth",
       rating: 2250,

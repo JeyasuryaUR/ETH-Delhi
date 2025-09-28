@@ -3,6 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/retroui/Button';
+import { Trophy, Coins } from 'lucide-react';
+
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
 
 const games = [
   { id: 'chess', name: 'Chess', active: true },
@@ -28,6 +32,31 @@ export default function Dashboard() {
     <div className="">
       <div className="py-12 px-6">
         <div className="max-w-7xl mx-auto">
+          {/* Contests Section */}
+          <motion.div
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/dashboard/contests')}
+            className="mb-8 p-8 rounded-lg border-2 border-black bg-gradient-to-r from-purple-500 to-pink-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer group"
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center space-x-3 mb-3">
+                  <span className="px-3 py-1 rounded-full bg-black text-white text-xs font-bold uppercase">New</span>
+                  <span className="text-sm font-bold text-white uppercase">Featured Feature</span>
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-2">
+                  <Trophy className="w-6 h-6" />
+                  Chess Contests
+                </h2>
+                <p className="text-white font-medium">Create and join tournaments with RIF token prizes on Rootstock!</p>
+              </div>
+              <Button size="lg" className="font-bold uppercase bg-white text-purple-600 hover:bg-gray-100">
+                View Contests
+              </Button>
+            </div>
+          </motion.div>
+
           {/* Featured Game */}
           {games.filter(game => game.active).map((game) => (
             <motion.div

@@ -1,0 +1,350 @@
+[
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "contestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "organizer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "prizePool",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "maxParticipants",
+				"type": "uint256"
+			}
+		],
+		"name": "ContestCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "contestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address[3]",
+				"name": "winners",
+				"type": "address[3]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "totalPrizePool",
+				"type": "uint256"
+			}
+		],
+		"name": "ContestEnded",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint32",
+				"name": "_maxParticipants",
+				"type": "uint32"
+			}
+		],
+		"name": "createContest",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "emergencyWithdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address[3]",
+				"name": "_winners",
+				"type": "address[3]"
+			}
+		],
+		"name": "endContest",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			}
+		],
+		"name": "joinContest",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "contestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "participant",
+				"type": "address"
+			}
+		],
+		"name": "ParticipantJoined",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "contestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "position",
+				"type": "uint8"
+			}
+		],
+		"name": "PrizeDistributed",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "contestCounter",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "contests",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "organizer",
+				"type": "address"
+			},
+			{
+				"internalType": "uint128",
+				"name": "initialPrizePool",
+				"type": "uint128"
+			},
+			{
+				"internalType": "uint128",
+				"name": "totalPrizePool",
+				"type": "uint128"
+			},
+			{
+				"internalType": "uint32",
+				"name": "maxParticipants",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint32",
+				"name": "participantCount",
+				"type": "uint32"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isEnded",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			}
+		],
+		"name": "getContestDetails",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "organizer",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "initialPrizePool",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "maxParticipants",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "participantCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "stakingAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isEnded",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalPrizePool",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			}
+		],
+		"name": "getContestWinners",
+		"outputs": [
+			{
+				"internalType": "address[3]",
+				"name": "",
+				"type": "address[3]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getContractBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			}
+		],
+		"name": "getStakingAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_contestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_user",
+				"type": "address"
+			}
+		],
+		"name": "isParticipant",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

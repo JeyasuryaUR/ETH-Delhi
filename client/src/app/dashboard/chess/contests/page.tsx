@@ -7,6 +7,9 @@ import { Button } from '@/components/retroui/Button';
 import { CreateTournamentDialog } from '@/components/chess/CreateTournamentDialog';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Tournament {
   id: string;
   title: string;
@@ -25,6 +28,24 @@ export default function ContestPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch tournaments from API
   const fetchTournaments = async () => {

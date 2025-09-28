@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE } from '@/lib/config';
 
 interface ENSRegistrationProps {
   isOpen: boolean;

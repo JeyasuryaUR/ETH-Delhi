@@ -11,6 +11,9 @@ import { ArrowLeft, Clock, User, Trophy } from 'lucide-react';
 import { useUser } from '@/components/ClientWrapper';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Player {
   id: string;
   username: string;
@@ -53,6 +56,24 @@ export default function TournamentGamePage() {
   
   const contestId = params.id as string;
   const gameId = params.gameId as string;
+  const [isClient, setIsClient] = useState(false);
+
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const [gameState, setGameState] = useState<GameState>({
     status: 'loading',
