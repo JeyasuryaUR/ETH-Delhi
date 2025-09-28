@@ -15,7 +15,7 @@ const port = process.env.PORT || 8000;
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Your Next.js dev server
+    origin: ["http://localhost:8000", "https://chess-fun.vercel.app"], // Added the Vercel domain
     methods: ["GET", "POST"],
   },
 });
@@ -23,7 +23,7 @@ const io = new Server(server, {
 // CORS middleware
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:8000", "https://chess-fun.vercel.app"], // Added the Vercel domain
     credentials: true,
   })
 );
