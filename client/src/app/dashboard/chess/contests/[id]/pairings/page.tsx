@@ -41,7 +41,25 @@ export default function ContestPairingsPage() {
   const [pairingsData, setPairingsData] = useState<RoundPairings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const { user, primaryWallet} = useDynamicContext();
+
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const fetchPairings = async () => {
     try {

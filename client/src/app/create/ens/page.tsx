@@ -14,24 +14,48 @@ const CreateENSPage = () => {
   const [fideId, setFideId] = useState('');
   const [lichessId, setLichessId] = useState('');
   const [isMinting, setIsMinting] = useState(false);
-  const { primaryWallet, user } = useDynamicContext();
-  const { userData, setUserData } = useUser();
-
-  // Check if wallet is connected
-  const isConnected = !!primaryWallet;
-  const walletAddress = primaryWallet?.address || '';
-  const email = user?.email || `user${Math.random().toString(36).substring(2, 8)}@example.com`;
-  const displayName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : `Player${Math.floor(Math.random() * 1000)}`;
-
-  // Redirect if user already exists
+  const [isClient, setIsClient] = useState(false);
+  
+  // Initialize client-side flag
   useEffect(() => {
-    if (userData && primaryWallet) {
+    setIsClient(true);
+  }, []);
+
+  // Only access Dynamic context on client side
+  const dynamicContext = isClient ? useDynamicContext() : { primaryWallet: null, user: null };
+  const { primaryWallet, user } = dynamicContext;
+  
+  // Only access user context on client side
+  const userContext = isClient ? useUser() : { userData: null, setUserData: () => {} };
+  const { userData, setUserData } = userContext;
+
+  // Check if wallet is connected - only on client side
+  const isConnected = isClient && !!primaryWallet;
+  const walletAddress = (isClient && primaryWallet?.address) || '';
+  const email = (isClient && user?.email) || `user${Math.random().toString(36).substring(2, 8)}@example.com`;
+  const displayName = (isClient && user?.firstName) ? `${user.firstName} ${user.lastName || ''}`.trim() : `Player${Math.floor(Math.random() * 1000)}`;
+
+  // Redirect if user already exists - only on client side
+  useEffect(() => {
+    if (isClient && userData && primaryWallet) {
       toast.success('You already have an ENS name! Redirecting to dashboard...');
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 2000);
     }
-  }, [userData, primaryWallet]);
+  }, [userData, primaryWallet, isClient]);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEnsNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;

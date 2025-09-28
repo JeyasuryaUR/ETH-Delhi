@@ -3,20 +3,6 @@ import { Button } from "@/components/ui/retro-button"
 import { ArrowLeft, Trophy, Medal, Award } from "lucide-react"
 import Link from "next/link"
 
-// Fix for JSX table elements
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      thead: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
-      tbody: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
-      th: React.DetailedHTMLProps<React.ThHTMLAttributes<HTMLTableHeaderCellElement>, HTMLTableHeaderCellElement>
-      td: React.DetailedHTMLProps<React.TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>
-      tr: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
-      table: React.DetailedHTMLProps<React.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>
-    }
-  }
-}
-
 // Mock leaderboard data - replace with actual data from your API
 const leaderboardData = [
   { rank: 1, ensAddress: "chessmaster.eth", rating: 2450 },

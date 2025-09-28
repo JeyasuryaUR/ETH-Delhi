@@ -29,6 +29,25 @@ interface GameState {
 export default function ChessPage() {
   const router = useRouter();
   const { primaryWallet, user } = useDynamicContext();
+  const [isClient, setIsClient] = useState(false);
+
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   const [gameState, setGameState] = useState<GameState>({
     status: 'waiting',
     player: null,

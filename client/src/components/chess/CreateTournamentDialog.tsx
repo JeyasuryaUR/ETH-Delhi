@@ -42,6 +42,7 @@ interface TournamentFormData {
 
 interface FormErrors {
   title?: string;
+  type?: string;
   timeControl?: string;
   startDate?: string;
   endDate?: string;
@@ -210,6 +211,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
       // Reset form
       setFormData({
         title: '',
+        type: '',
         timeControl: '',
         startDate: '',
         endDate: '',

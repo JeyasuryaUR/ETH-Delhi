@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
 import ClientWrapper from "@/components/ClientWrapper";
 
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
- 
+import Providers from "@/lib/Providers";
+
 const archivoBlack = Archivo_Black({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-head",
   display: "swap",
 });
- 
+
 const space = Space_Grotesk({
   subsets: ["latin"],
   weight: "400",
@@ -29,11 +29,12 @@ export default function RootLayout({
       <body
         className={`${archivoBlack.variable} ${space.variable}`}
       >
-        
-        <Toaster position="top-center" />
-        <ClientWrapper>
-          {children}
-        </ClientWrapper>
+        <Providers>
+
+          <ClientWrapper>
+            {children}
+          </ClientWrapper>
+        </Providers>
       </body>
     </html>
   );

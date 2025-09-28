@@ -7,7 +7,7 @@ import Link from "next/link"
 const bestMatches = [
   {
     id: 1,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "chessmaster.eth",
       rating: 2450,
@@ -22,7 +22,7 @@ const bestMatches = [
   },
   {
     id: 2,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "strategist.eth",
       rating: 2320,
@@ -37,7 +37,7 @@ const bestMatches = [
   },
   {
     id: 3,
-    image: "/api/placeholder/400/300",
+    image: "https://placehold.co/400x300",
     player1: {
       ens: "pawnpusher.eth",
       rating: 2250,
