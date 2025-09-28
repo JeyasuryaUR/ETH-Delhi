@@ -11,6 +11,9 @@ import { ArrowLeft, Clock, User, Trophy } from 'lucide-react';
 import { useUser } from '@/components/ClientWrapper';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Player {
   id: string;
   username: string;

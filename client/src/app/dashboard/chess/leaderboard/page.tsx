@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/retro-button"
 import { ArrowLeft, Trophy, Medal, Award } from "lucide-react"
 import Link from "next/link"
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic'
+
 // Mock leaderboard data - replace with actual data from your API
 const leaderboardData = [
   { rank: 1, ensAddress: "chessmaster.eth", rating: 2450 },

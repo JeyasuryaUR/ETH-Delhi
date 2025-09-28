@@ -8,6 +8,9 @@ import { Button } from '@/components/retroui/Button';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Player {
   id: string;
   wallet_address: string;

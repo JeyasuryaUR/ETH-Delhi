@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/retroui/Button';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 const games = [
   { id: 'chess', name: 'Chess', active: true },
   { id: 'ping-pong', name: 'Ping Pong', active: false },

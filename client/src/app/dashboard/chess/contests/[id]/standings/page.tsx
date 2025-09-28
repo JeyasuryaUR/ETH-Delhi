@@ -7,6 +7,9 @@ import { ArrowLeft, Trophy, Medal, Crown, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/retroui/Button';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface ContestStanding {
   rank: number;
   ensAddress: string;

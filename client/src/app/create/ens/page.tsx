@@ -7,6 +7,9 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useUser } from '@/components/ClientWrapper';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 const CreateENSPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [ensName, setEnsName] = useState('');

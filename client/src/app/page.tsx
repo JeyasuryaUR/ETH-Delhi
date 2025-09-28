@@ -7,6 +7,9 @@ import { achievements } from "@/data/portfolio-data"
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core"
 import Link from "next/link"
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic'
+
 export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
   

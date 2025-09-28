@@ -7,6 +7,9 @@ import { Button } from '@/components/retroui/Button';
 import { CreateTournamentDialog } from '@/components/chess/CreateTournamentDialog';
 import { API_BASE } from '@/lib/config';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Tournament {
   id: string;
   title: string;

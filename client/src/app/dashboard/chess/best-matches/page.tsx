@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/retro-button"
 import { ArrowLeft, Trophy, Medal, Award, Crown, Target } from "lucide-react"
 import Link from "next/link"
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic'
+
 // Mock best matches data
 const bestMatches = [
   {

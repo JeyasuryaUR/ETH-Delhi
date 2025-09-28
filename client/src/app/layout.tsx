@@ -5,6 +5,9 @@ import ClientWrapper from "@/components/ClientWrapper";
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import Providers from "@/lib/Providers";
 
+// Disable prerendering globally to avoid client-side library issues
+export const dynamic = 'force-dynamic';
+
 const archivoBlack = Archivo_Black({
   subsets: ["latin"],
   weight: "400",

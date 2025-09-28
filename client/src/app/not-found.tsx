@@ -1,4 +1,7 @@
 import Link from 'next/link'
+
+// Disable prerendering for this page to avoid client-side library issues
+export const dynamic = 'force-dynamic'
  
 export default function NotFound() {
   return (

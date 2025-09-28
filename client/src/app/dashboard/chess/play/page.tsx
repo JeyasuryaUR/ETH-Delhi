@@ -8,6 +8,9 @@ import { useChessSocket } from '@/hooks/useChessSocket';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { motion } from 'framer-motion';
 
+// Disable prerendering for this client-side page
+export const dynamic = 'force-dynamic';
+
 interface Player {
   id: string;
   name: string;
