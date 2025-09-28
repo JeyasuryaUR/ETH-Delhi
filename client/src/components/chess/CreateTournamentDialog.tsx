@@ -174,27 +174,34 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
     try {
       const contestType = getContestType(formData.timeControl);
       
+      const requestData = {
+        title: formData.title,
+        type: contestType,
+        timeControl: formData.timeControl,
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+        prizePool: formData.prizePool.toString(),
+        maxParticipants: formData.maxParticipants,
+        totalRounds: formData.totalRounds,
+        organizerWalletAddress: primaryWallet.address, // Use actual connected wallet address
+        status: 'upcoming'
+      };
+
+      console.log('Creating tournament with data:', requestData);
+      console.log('API endpoint:', API_BASE + '/contests');
+      
       const response = await fetch(API_BASE + '/contests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: formData.title,
-          type: contestType,
-          timeControl: formData.timeControl,
-          startDate: new Date(formData.startDate).toISOString(),
-          endDate: new Date(formData.endDate).toISOString(),
-          prizePool: formData.prizePool.toString(),
-          maxParticipants: formData.maxParticipants,
-          totalRounds: formData.totalRounds,
-          organizerWalletAddress: primaryWallet.address, // Use actual connected wallet address
-          status: 'upcoming'
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create tournament');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(`Failed to create tournament: ${errorMessage}`);
       }
 
       const tournament = await response.json();
@@ -358,7 +365,7 @@ export function CreateTournamentDialog({ isOpen, onClose, onTournamentCreated }:
 
           <div className="grid md:grid-cols-3 gap-6">
             <div>
-              <Label className="text-sm font-bold text-black uppercase mb-2">Prize Pool (ETH)</Label>
+              <Label className="text-sm font-bold text-black uppercase mb-2">Prize Pool (RBTC)</Label>
               <Input
                 type="number"
                 min="0"

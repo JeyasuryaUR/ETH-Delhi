@@ -134,14 +134,11 @@ export const createContest = async (req: Request, res: Response) => {
         select: { id: true, username: true, display_name: true }
       });
 
-      if (!organizer) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organizer wallet address not found in the system',
-        });
+      // If organizer exists, use their ID, otherwise create contest without organizer_id
+      if (organizer) {
+        organizerId = organizer.id;
       }
-
-      organizerId = organizer.id;
+      // Note: We allow creating contests even if organizer is not registered in our system
     }
 
     // Create contest

@@ -32,7 +32,19 @@ interface GameState {
 export default function ChessPage() {
   const router = useRouter();
   const { primaryWallet, user } = useDynamicContext();
+
   const [isClient, setIsClient] = useState(false);
+  const [gameState, setGameState] = useState<GameState>({
+    status: 'waiting',
+    player: null,
+    opponent: null,
+    gameId: null,
+    board: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', // Starting position
+    turn: 'white',
+    playerColor: null,
+    winner: null,
+    winReason: null
+  });
 
   // Initialize client-side flag
   useEffect(() => {
@@ -50,18 +62,6 @@ export default function ChessPage() {
       </div>
     );
   }
-
-  const [gameState, setGameState] = useState<GameState>({
-    status: 'waiting',
-    player: null,
-    opponent: null,
-    gameId: null,
-    board: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', // Starting position
-    turn: 'white',
-    playerColor: null,
-    winner: null,
-    winReason: null
-  });
 
   // Socket event handlers
   const handleWaitingForOpponent = useCallback(() => {

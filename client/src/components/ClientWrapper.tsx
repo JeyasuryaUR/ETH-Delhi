@@ -155,29 +155,6 @@ const WalletRedirectHandler = ({ children }: { children: ReactNode }) => {
 const NavContent = () => {
   const { userData, isCheckingUser } = useUser();
   const { primaryWallet } = useDynamicContext();
-  const [isClient, setIsClient] = useState(false);
-
-  // Ensure we're on the client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Don't render until we're on the client
-  if (!isClient) {
-    return (
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90vw] md:max-w-5xl px-4 md:px-6 py-3 flex justify-between items-center bg-white border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <Link href="/" className="flex items-center gap-2 md:gap-3 group">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 text-xl md:text-2xl font-bold tracking-wider group-hover:from-gray-700 group-hover:to-gray-500 transition-all duration-300">
-            PLAY
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <div className="w-20 h-10 bg-gray-200 animate-pulse rounded-lg"></div>
-        </div>
-      </nav>
-    );
-  }
 
   return (
     <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90vw] md:max-w-5xl px-4 md:px-6 py-3 flex justify-between items-center bg-white border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">

@@ -62,23 +62,6 @@ export default function ContestDetailPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isClient, setIsClient] = useState(false);
-
-  // Initialize client-side flag
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Show loading state during hydration
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-lg font-bold text-foreground">Loading...</div>
-        </div>
-      </div>
-    );
-  }
   const [isWalletReady, setIsWalletReady] = useState(false);
 
   const contestId = params.id as string;
@@ -124,6 +107,11 @@ export default function ContestDetailPage() {
     }
   };
 
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   useEffect(() => {
     if (contestId) {
       fetchContestDetails();
@@ -138,6 +126,18 @@ export default function ContestDetailPage() {
       setIsWalletReady(false);
     }
   }, [primaryWallet, user]);
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-bold text-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   // Join contest function
   const handleJoinContest = async () => {
