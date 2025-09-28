@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createConfig, http, WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia } from "viem/chains";
+import { defineChain } from 'viem';
 import { DynamicWagmiConnector } from '@dynamic-labs/wagmi-connector';
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { API_BASE } from "@/lib/config";
@@ -39,10 +40,56 @@ export const useUser = () => {
   return context;
 };
 
+// Define Rootstock Mainnet chain
+const rootstock = defineChain({
+  id: 30,
+  name: 'Rootstock Mainnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Rootstock Bitcoin',
+    symbol: 'RBTC',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://public-node.rsk.co'],
+    },
+    public: {
+      http: ['https://public-node.rsk.co'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'RSK Explorer', url: 'https://explorer.rsk.co' },
+  },
+});
+
+// Define Rootstock Testnet chain
+const rootstockTestnet = defineChain({
+  id: 31,
+  name: 'Rootstock Testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Test Rootstock Bitcoin',
+    symbol: 'tRBTC',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://public-node.testnet.rsk.co'],
+    },
+    public: {
+      http: ['https://public-node.testnet.rsk.co'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'RSK Testnet Explorer', url: 'https://explorer.testnet.rsk.co' },
+  },
+});
+
 const config = createConfig({
-  chains: [sepolia],
+  chains: [rootstock, rootstockTestnet, sepolia],
   multiInjectedProviderDiscovery: false,
   transports: {
+    [rootstock.id]: http(),
+    [rootstockTestnet.id]: http(),
     [sepolia.id]: http(),
   },
 });
@@ -157,6 +204,30 @@ const NavContent = () => {
       </Link>
 
       <div className="flex items-center gap-3">
+        {/* Navigation Links */}
+        {primaryWallet && userData && (
+          <div className="hidden md:flex items-center gap-2">
+            <Link 
+              href="/dashboard" 
+              className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Dashboard
+            </Link>
+            <Link 
+              href="/dashboard/contests" 
+              className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Contests
+            </Link>
+            <Link 
+              href="/dashboard/chess" 
+              className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Chess
+            </Link>
+          </div>
+        )}
+
         {/* Show loading state */}
         {primaryWallet && isCheckingUser && (
           <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg">
