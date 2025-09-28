@@ -8,7 +8,6 @@ import { createConfig, http, WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia } from "viem/chains";
 import { defineChain } from 'viem';
-import { DynamicWagmiConnector } from '@dynamic-labs/wagmi-connector';
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { API_BASE } from "@/lib/config";
 import { Toaster } from "react-hot-toast";
@@ -103,20 +102,14 @@ const WalletRedirectHandler = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const [isCheckingUser, setIsCheckingUser] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  // Ensure we're on the client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Function to check if user exists in database
   const checkUserExists = async (walletAddress: string) => {
     try {
       setIsCheckingUser(true);
-      const response = await fetch(API_BASE + `/users/wallet/${walletAddress}`);
+      const response = await fetch(`http://localhost:8000/api/users/wallet/${walletAddress}`);
       const result = await response.json();
-
+      
       if (result.success) {
         setUserData(result.data);
         return true;
@@ -135,31 +128,22 @@ const WalletRedirectHandler = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleWalletConnection = async () => {
-      // Only run on client side and when wallet is connected
-      if (!isClient || !primaryWallet || !user || pathname === '/') {
-        return;
-      }
-
-      try {
+      if (primaryWallet && user && pathname === '/') {
         const walletAddress = primaryWallet.address;
-        if (walletAddress) {
-          const exists = await checkUserExists(walletAddress);
-
-          if (exists) {
-            // User exists, redirect to dashboard
-            router.push('/dashboard');
-          } else {
-            // User doesn't exist, redirect to ENS creation
-            router.push('/create/ens');
-          }
+        const exists = await checkUserExists(walletAddress);
+        
+        if (exists) {
+          // User exists, redirect to dashboard
+          router.push('/dashboard');
+        } else {
+          // User doesn't exist, redirect to ENS creation
+          router.push('/create/ens');
         }
-      } catch (error) {
-        console.error('Error in wallet connection handler:', error);
       }
     };
 
     handleWalletConnection();
-  }, [primaryWallet, user, pathname, router, isClient]);
+  }, [primaryWallet, user, pathname, router]);
 
   return (
     <UserContext.Provider value={{ userData, setUserData, isCheckingUser, setIsCheckingUser }}>
@@ -288,7 +272,6 @@ const ClientWrapper = ({ children }: { children: ReactNode }) => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <DynamicWagmiConnector>
           <WalletRedirectHandler>
 
             <Toaster position="top-center" />
@@ -297,7 +280,6 @@ const ClientWrapper = ({ children }: { children: ReactNode }) => {
               <main style={{ backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}>{children}</main>
             </div>
           </WalletRedirectHandler>
-        </DynamicWagmiConnector>
       </QueryClientProvider>
     </WagmiProvider>
   );
