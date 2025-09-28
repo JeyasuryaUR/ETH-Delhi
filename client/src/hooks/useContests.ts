@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { usePoolService } from '@/services/poolService';
-import { ContestDetails, ContestInfo } from '@/services/poolService';
+import { usePoolContract } from '@/hooks/usePoolContract';
+import { ContestDetails, ContestInfo } from '@/hooks/usePoolContract';
 import { formatUnits, parseUnits } from 'viem';
 import { RIF_TOKEN, CONTRACTS } from '@/lib/contracts';
 
@@ -14,21 +14,21 @@ export interface ContestDisplayInfo extends ContestInfo {
 }
 
 export function useContests() {
-  const poolService = usePoolService();
+  const poolContract = usePoolContract();
   const [contests, setContests] = useState<ContestDisplayInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch all contests
   const fetchContests = useCallback(async () => {
-    if (!poolService) return;
+    if (!poolContract.isConnected || !poolContract.address) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const contestCounter = await poolService.getContestCounter();
-      const contestPromises: Promise<ContestDisplayInfo>[] = [];
+      const contestCounter = await poolContract.getContestCounter();
+      const contestPromises: Promise<ContestDisplayInfo | null>[] = [];
 
       // Fetch details for each contest
       for (let i = 0; i < Number(contestCounter); i++) {
@@ -36,10 +36,10 @@ export function useContests() {
         
         const contestPromise = (async () => {
           try {
-            const details = await poolService.getContestDetails(contestId);
-            const isParticipant = await poolService.isParticipant(contestId, poolService.account.address);
+            const details = await poolContract.getContestDetails(contestId);
+            const isParticipant = await poolContract.isParticipant(contestId, poolContract.address!);
             
-            const participantStake = poolService.calculateParticipantStake(
+            const participantStake = poolContract.calculateParticipantStake(
               formatUnits(details.initialPrizePool, RIF_TOKEN.DECIMALS)
             );
 
@@ -78,14 +78,14 @@ export function useContests() {
     } finally {
       setLoading(false);
     }
-  }, [poolService]);
+  }, [poolContract]);
 
   // Create a new contest
   const createContest = useCallback(async (prizePoolAmount: string, maxParticipants: number) => {
-    if (!poolService) throw new Error('Pool service not available');
+    if (!poolContract.isConnected) throw new Error('Wallet not connected');
 
     try {
-      const txHash = await poolService.createContest(prizePoolAmount, maxParticipants);
+      const txHash = await poolContract.createContest(prizePoolAmount, maxParticipants);
       
       // Refresh contests after creation
       await fetchContests();
@@ -95,14 +95,14 @@ export function useContests() {
       console.error('Error creating contest:', error);
       throw error;
     }
-  }, [poolService, fetchContests]);
+  }, [poolContract, fetchContests]);
 
   // Join a contest
   const joinContest = useCallback(async (contestId: bigint) => {
-    if (!poolService) throw new Error('Pool service not available');
+    if (!poolContract.isConnected) throw new Error('Wallet not connected');
 
     try {
-      const txHash = await poolService.joinContest(contestId);
+      const txHash = await poolContract.joinContest(contestId);
       
       // Refresh contests after joining
       await fetchContests();
@@ -112,14 +112,14 @@ export function useContests() {
       console.error('Error joining contest:', error);
       throw error;
     }
-  }, [poolService, fetchContests]);
+  }, [poolContract, fetchContests]);
 
   // End a contest
   const endContest = useCallback(async (contestId: bigint, winners: [string, string, string]) => {
-    if (!poolService) throw new Error('Pool service not available');
+    if (!poolContract.isConnected) throw new Error('Wallet not connected');
 
     try {
-      const txHash = await poolService.endContest(contestId, winners);
+      const txHash = await poolContract.endContest(contestId, winners);
       
       // Refresh contests after ending
       await fetchContests();
@@ -129,55 +129,55 @@ export function useContests() {
       console.error('Error ending contest:', error);
       throw error;
     }
-  }, [poolService, fetchContests]);
+  }, [poolContract, fetchContests]);
 
   // Get RIF balance
   const getRIFBalance = useCallback(async () => {
-    if (!poolService) return '0';
+    if (!poolContract.isConnected || !poolContract.address) return '0';
 
     try {
-      const balance = await poolService.getRIFBalance(poolService.account.address);
+      const balance = await poolContract.getRIFBalance(poolContract.address);
       return formatUnits(balance, RIF_TOKEN.DECIMALS);
     } catch (error) {
       console.error('Error getting RIF balance:', error);
       return '0';
     }
-  }, [poolService]);
+  }, [poolContract]);
 
   // Check RIF allowance
   const getRIFAllowance = useCallback(async () => {
-    if (!poolService) return BigInt(0);
+    if (!poolContract.isConnected || !poolContract.address) return BigInt(0);
 
     try {
-      return await poolService.getRIFAllowance(
-        poolService.account.address,
+      return await poolContract.getRIFAllowance(
+        poolContract.address,
         CONTRACTS.POOL.ADDRESS
       );
     } catch (error) {
       console.error('Error getting RIF allowance:', error);
       return BigInt(0);
     }
-  }, [poolService]);
+  }, [poolContract]);
 
   // Approve RIF tokens
   const approveRIF = useCallback(async (amount: string) => {
-    if (!poolService) throw new Error('Pool service not available');
+    if (!poolContract.isConnected) throw new Error('Wallet not connected');
 
     try {
       const amountWei = parseUnits(amount, RIF_TOKEN.DECIMALS);
-      return await poolService.approveRIF(amountWei);
+      return await poolContract.approveRIF(amountWei);
     } catch (error) {
       console.error('Error approving RIF tokens:', error);
       throw error;
     }
-  }, [poolService]);
+  }, [poolContract]);
 
   // Load contests on mount
   useEffect(() => {
-    if (poolService) {
+    if (poolContract.isConnected) {
       fetchContests();
     }
-  }, [poolService, fetchContests]);
+  }, [poolContract.isConnected, fetchContests]);
 
   return {
     contests,
