@@ -13,6 +13,12 @@ export const createUserProfile = async (req: Request, res: Response) => {
       ens_resolver,
       ens_registered,
       ens_verified,
+      chess_com_id,
+      fide_id,
+      lichess_id,
+      rating_cached,
+      walrus_blob_id,
+      metadata,
     } = req.body ?? {};
 
     // Basic required fields check
@@ -39,6 +45,9 @@ export const createUserProfile = async (req: Request, res: Response) => {
         ens_resolver: ens_resolver || null,
         ens_registered: Boolean(ens_registered ?? false),
         ens_verified: Boolean(ens_verified ?? false),
+        rating_cached: rating_cached || 1200,
+        walrus_blob_id: walrus_blob_id || null,
+        metadata: metadata || null,
       },
     });
 

@@ -138,7 +138,7 @@ const computeWeightedAverage = (
 };
 
 export const getChessDotComRating = async (req: Request, res: Response) => {
-  const { chessUsername, lichessUsername, fideId } = req.query as {
+  const { chessUsername, lichessUsername, fideId } = req.body as {
     chessUsername?: string;
     lichessUsername?: string;
     fideId?: string;

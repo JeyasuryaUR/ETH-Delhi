@@ -37,6 +37,10 @@ export class PoolService {
     this.account = account;
   }
 
+  get accountAddress(): string {
+    return this.account.address;
+  }
+
   // Get RIF token balance for an address
   async getRIFBalance(address: string): Promise<bigint> {
     try {

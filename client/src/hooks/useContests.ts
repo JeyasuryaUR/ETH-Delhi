@@ -28,7 +28,7 @@ export function useContests() {
 
     try {
       const contestCounter = await poolService.getContestCounter();
-      const contestPromises: Promise<ContestDisplayInfo>[] = [];
+      const contestPromises: Promise<ContestDisplayInfo | null>[] = [];
 
       // Fetch details for each contest
       for (let i = 0; i < Number(contestCounter); i++) {
@@ -37,7 +37,7 @@ export function useContests() {
         const contestPromise = (async () => {
           try {
             const details = await poolService.getContestDetails(contestId);
-            const isParticipant = await poolService.isParticipant(contestId, poolService.account.address);
+            const isParticipant = await poolService.isParticipant(contestId, poolService.accountAddress);
             
             const participantStake = poolService.calculateParticipantStake(
               formatUnits(details.initialPrizePool, RIF_TOKEN.DECIMALS)
@@ -136,7 +136,7 @@ export function useContests() {
     if (!poolService) return '0';
 
     try {
-      const balance = await poolService.getRIFBalance(poolService.account.address);
+      const balance = await poolService.getRIFBalance(poolService.accountAddress);
       return formatUnits(balance, RIF_TOKEN.DECIMALS);
     } catch (error) {
       console.error('Error getting RIF balance:', error);
@@ -150,7 +150,7 @@ export function useContests() {
 
     try {
       return await poolService.getRIFAllowance(
-        poolService.account.address,
+        poolService.accountAddress,
         CONTRACTS.POOL.ADDRESS
       );
     } catch (error) {

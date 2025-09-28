@@ -13,11 +13,15 @@ export const dynamic = 'force-dynamic';
 const CreateENSPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [ensName, setEnsName] = useState('');
-  const [chessComId, setChessComId] = useState('');
   const [fideId, setFideId] = useState('');
   const [lichessId, setLichessId] = useState('');
+  const [chessComId, setChessComId] = useState('');
   const [isMinting, setIsMinting] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [generatedRating, setGeneratedRating] = useState<number | null>(null);
+  const [walrusBlobId, setWalrusBlobId] = useState<string | null>(null);
+  const [isGeneratingRating, setIsGeneratingRating] = useState(false);
+  const [ratingDetails, setRatingDetails] = useState<any>(null);
   
   // Initialize client-side flag
   useEffect(() => {
@@ -69,12 +73,73 @@ const CreateENSPage = () => {
     setEnsName(value);
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (!ensName.trim()) {
       toast.error('Please enter a name for your ENS');
       return;
     }
     setCurrentStep(2);
+  };
+
+  const handleGenerateRating = async () => {
+    if (!fideId.trim() && !lichessId.trim() && !chessComId.trim()) {
+      toast.error('Please enter at least one chess platform ID');
+      return;
+    }
+
+    setIsGeneratingRating(true);
+
+    try {
+      // Generate unified rating using the rating API
+      const response = await fetch(API_BASE + '/ratings/getRating', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fideId: fideId.trim() || undefined,
+          lichessUsername: lichessId.trim() || undefined,
+          chessUsername: chessComId.trim() || undefined,
+        }),
+      });
+
+      const ratingResult = await response.json();
+
+      if (ratingResult.averages?.weightedAverage) {
+        const rating = Math.round(ratingResult.averages.weightedAverage);
+        setGeneratedRating(rating);
+        setRatingDetails(ratingResult);
+        
+        // Store the rating in Walrus
+        const walrusResponse = await fetch(API_BASE + '/ratings/store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fideId: fideId.trim() || undefined,
+            lichessUsername: lichessId.trim() || undefined,
+            chessUsername: chessComId.trim() || undefined,
+          }),
+        });
+
+        const walrusResult = await walrusResponse.json();
+        
+        if (walrusResult.success && walrusResult.quiltPatchIds?.[0]?.quiltPatchId) {
+          setWalrusBlobId(walrusResult.quiltPatchIds[0].quiltPatchId);
+          toast.success(`✅ Rating generated: ${rating} | Stored in Walrus`);
+        } else {
+          toast.error('Failed to store rating in Walrus');
+        }
+      } else {
+        toast.error('Failed to generate unified rating - no valid ratings found');
+      }
+    } catch (error) {
+      console.error('Error generating rating:', error);
+      toast.error('Failed to generate rating. Please try again.');
+    } finally {
+      setIsGeneratingRating(false);
+    }
   };
 
   const handlePrevStep = () => {
@@ -110,6 +175,15 @@ const CreateENSPage = () => {
         chess_com_id: chessComId || null,
         fide_id: fideId || null,
         lichess_id: lichessId || null,
+        rating_cached: generatedRating || 1200,
+        walrus_blob_id: walrusBlobId || null,
+        metadata: {
+          fideId: fideId || null,
+          lichessId: lichessId || null,
+          chessComId: chessComId || null,
+          ratingGenerated: generatedRating || null,
+          walrusBlobId: walrusBlobId || null,
+        },
       };
 
       const response = await fetch(API_BASE + '/users', {
@@ -259,19 +333,6 @@ const CreateENSPage = () => {
                   <div className="space-y-3 mb-4">
                     <div>
                       <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
-                        Chess.com Username
-                      </label>
-                      <input
-                        type="text"
-                        value={chessComId}
-                        onChange={(e) => setChessComId(e.target.value)}
-                        placeholder="Enter your Chess.com username"
-                        className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
                         FIDE ID
                       </label>
                       <input
@@ -295,6 +356,62 @@ const CreateENSPage = () => {
                         className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
+                        Chess.com Username
+                      </label>
+                      <input
+                        type="text"
+                        value={chessComId}
+                        onChange={(e) => setChessComId(e.target.value)}
+                        placeholder="Enter your Chess.com username"
+                        className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rating Generation Section */}
+                  <div className="mb-4">
+                    <Button
+                      onClick={handleGenerateRating}
+                      disabled={isGeneratingRating || (!fideId.trim() && !lichessId.trim() && !chessComId.trim())}
+                      variant="secondary"
+                      size="lg"
+                      className="w-full text-sm px-3 py-2 font-bold uppercase tracking-wider font-retro mb-3"
+                    >
+                      {isGeneratingRating ? 'Generating Rating...' : 'Generate Unified Rating'}
+                    </Button>
+
+                    {generatedRating && (
+                      <div className="bg-primary retro-border retro-shadow p-3 mb-3">
+                        <div className="text-xs text-primary-foreground mb-1 font-bold font-retro uppercase">Generated Rating:</div>
+                        <div className="text-lg font-bold font-retro text-primary-foreground">
+                          {generatedRating}
+                        </div>
+                        {ratingDetails && (
+                          <div className="mt-2 text-xs text-primary-foreground/80">
+                            <div className="mb-1">
+                              <span className="font-bold">FIDE:</span> {ratingDetails.averages.fideRating ? Math.round(ratingDetails.averages.fideRating) : 'N/A'}
+                            </div>
+                            <div className="mb-1">
+                              <span className="font-bold">Chess.com:</span> {ratingDetails.averages.chessAvg ? Math.round(ratingDetails.averages.chessAvg) : 'N/A'}
+                            </div>
+                            <div className="mb-1">
+                              <span className="font-bold">Lichess:</span> {ratingDetails.averages.lichessAvg ? Math.round(ratingDetails.averages.lichessAvg) : 'N/A'}
+                            </div>
+                          </div>
+                        )}
+                        {walrusBlobId && (
+                          <div className="mt-2">
+                            <div className="text-xs text-primary-foreground/70 mb-1 font-bold font-retro uppercase">Walrus Blob ID:</div>
+                            <div className="text-xs font-mono text-primary-foreground/80 break-all">
+                              {walrusBlobId}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-primary retro-border retro-shadow p-3 mb-4">
@@ -482,19 +599,6 @@ const CreateENSPage = () => {
                   <div className="space-y-4 mb-4">
                     <div>
                       <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
-                        Chess.com Username
-                      </label>
-                      <input
-                        type="text"
-                        value={chessComId}
-                        onChange={(e) => setChessComId(e.target.value)}
-                        placeholder="Enter your Chess.com username"
-                        className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
                         FIDE ID
                       </label>
                       <input
@@ -518,6 +622,62 @@ const CreateENSPage = () => {
                         className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-bold font-retro text-foreground mb-1 uppercase">
+                        Chess.com Username
+                      </label>
+                      <input
+                        type="text"
+                        value={chessComId}
+                        onChange={(e) => setChessComId(e.target.value)}
+                        placeholder="Enter your Chess.com username"
+                        className="w-full px-3 py-2 text-sm retro-border focus:outline-none transition-all duration-200 font-retro bg-background text-foreground placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rating Generation Section - Desktop */}
+                  <div className="mb-4">
+                    <Button
+                      onClick={handleGenerateRating}
+                      disabled={isGeneratingRating || (!fideId.trim() && !lichessId.trim() && !chessComId.trim())}
+                      variant="secondary"
+                      size="lg"
+                      className="w-full text-sm px-4 py-3 font-bold uppercase tracking-wider font-retro mb-3"
+                    >
+                      {isGeneratingRating ? 'Generating Rating...' : 'Generate Unified Rating'}
+                    </Button>
+
+                    {generatedRating && (
+                      <div className="bg-primary retro-border retro-shadow p-3 mb-3">
+                        <div className="text-xs text-primary-foreground mb-1 font-bold font-retro uppercase">Generated Rating:</div>
+                        <div className="text-lg font-bold font-retro text-primary-foreground">
+                          {generatedRating}
+                        </div>
+                        {ratingDetails && (
+                          <div className="mt-2 text-xs text-primary-foreground/80">
+                            <div className="mb-1">
+                              <span className="font-bold">FIDE:</span> {ratingDetails.averages.fideRating ? Math.round(ratingDetails.averages.fideRating) : 'N/A'}
+                            </div>
+                            <div className="mb-1">
+                              <span className="font-bold">Chess.com:</span> {ratingDetails.averages.chessAvg ? Math.round(ratingDetails.averages.chessAvg) : 'N/A'}
+                            </div>
+                            <div className="mb-1">
+                              <span className="font-bold">Lichess:</span> {ratingDetails.averages.lichessAvg ? Math.round(ratingDetails.averages.lichessAvg) : 'N/A'}
+                            </div>
+                          </div>
+                        )}
+                        {walrusBlobId && (
+                          <div className="mt-2">
+                            <div className="text-xs text-primary-foreground/70 mb-1 font-bold font-retro uppercase">Walrus Blob ID:</div>
+                            <div className="text-xs font-mono text-primary-foreground/80 break-all">
+                              {walrusBlobId}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-primary retro-border retro-shadow p-3 mb-4">
