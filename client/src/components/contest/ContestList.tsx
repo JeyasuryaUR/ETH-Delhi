@@ -51,8 +51,7 @@ export default function ContestList({ contests, onJoinContest, onEndContest }: C
 
     try {
       setEndingContest(contestId);
-      // Note: This would need to be implemented in the hook
-      // await endContest(contestId, winners);
+      await endContest(contestId, winners);
       toast.success('Contest ended successfully!');
       onEndContest?.(contestId, winners);
       setWinners(['', '', '']);
@@ -118,7 +117,7 @@ export default function ContestList({ contests, onJoinContest, onEndContest }: C
               
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">
-                  {contest.totalPrizePoolFormatted} RIF
+                  {contest.totalPrizePoolFormatted} ETH
                 </div>
                 <div className="text-sm text-gray-500">Total Prize Pool</div>
               </div>
@@ -141,7 +140,7 @@ export default function ContestList({ contests, onJoinContest, onEndContest }: C
                   Entry Fee
                 </div>
                 <div className="text-lg font-semibold text-gray-900">
-                  {contest.participantStake} RIF
+                  {contest.participantStake} ETH
                 </div>
               </div>
               
@@ -161,7 +160,7 @@ export default function ContestList({ contests, onJoinContest, onEndContest }: C
                   Initial Pool
                 </div>
                 <div className="text-lg font-semibold text-gray-900">
-                  {contest.initialPrizePoolFormatted} RIF
+                  {contest.initialPrizePoolFormatted} ETH
                 </div>
               </div>
             </div>
@@ -190,13 +189,38 @@ export default function ContestList({ contests, onJoinContest, onEndContest }: C
                 )}
                 
                 {contest.isActive && contest.organizer === '0x...' && ( // Check if current user is organizer
-                  <button
-                    onClick={() => handleEndContest(contest.contestId)}
-                    disabled={endingContest === contest.contestId}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {endingContest === contest.contestId ? 'Ending...' : 'End Contest'}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="1st place address"
+                        value={winners[0]}
+                        onChange={(e) => setWinners([e.target.value, winners[1], winners[2]])}
+                        className="px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="2nd place address"
+                        value={winners[1]}
+                        onChange={(e) => setWinners([winners[0], e.target.value, winners[2]])}
+                        className="px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="3rd place address"
+                        value={winners[2]}
+                        onChange={(e) => setWinners([winners[0], winners[1], e.target.value])}
+                        className="px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleEndContest(contest.contestId)}
+                      disabled={endingContest === contest.contestId}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {endingContest === contest.contestId ? 'Ending...' : 'End Contest'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

@@ -15,45 +15,61 @@ export default function ContestsPage() {
     loading, 
     error, 
     refreshContests, 
-    getRIFBalance 
+    getETHBalance 
   } = useContests();
   const { isConnected, address } = useAccount();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [rifBalance, setRifBalance] = useState('0');
+  const [ethBalance, setEthBalance] = useState('0');
 
-  // Load RIF balance
-  const loadRIFBalance = async () => {
+  // Load ETH balance
+  const loadETHBalance = async () => {
     try {
-      const balance = await getRIFBalance();
-      setRifBalance(balance);
+      const balance = await getETHBalance();
+      setEthBalance(balance);
     } catch (error) {
-      console.error('Error loading RIF balance:', error);
+      console.error('Error loading ETH balance:', error);
     }
   };
 
   // Load balance on mount
-  useState(() => {
+  useEffect(() => {
     if (isConnected) {
-      loadRIFBalance();
+      loadETHBalance();
     }
-  });
+  }, [isConnected]);
 
   const handleRefresh = async () => {
     try {
       await refreshContests();
-      await loadRIFBalance();
+      await loadETHBalance();
       toast.success('Contests refreshed');
     } catch (error) {
       toast.error('Failed to refresh contests');
     }
   };
 
-  const handleJoinContest = (contestId: bigint) => {
-    console.log('Joining contest:', contestId.toString());
+  const { joinContest, endContest } = useContests();
+
+  const handleJoinContest = async (contestId: bigint) => {
+    try {
+      await joinContest(contestId);
+      toast.success('Successfully joined contest!');
+      await refreshContests();
+    } catch (error: any) {
+      console.error('Error joining contest:', error);
+      toast.error(error.message || 'Failed to join contest');
+    }
   };
 
-  const handleEndContest = (contestId: bigint, winners: [string, string, string]) => {
-    console.log('Ending contest:', contestId.toString(), winners);
+  const handleEndContest = async (contestId: bigint, winners: [string, string, string]) => {
+    try {
+      await endContest(contestId, winners);
+      toast.success('Contest ended successfully!');
+      await refreshContests();
+    } catch (error: any) {
+      console.error('Error ending contest:', error);
+      toast.error(error.message || 'Failed to end contest');
+    }
   };
 
   if (!isConnected) {
@@ -85,9 +101,9 @@ export default function ContestsPage() {
           
           <div className="flex items-center gap-4 mt-4 md:mt-0">
             <div className="bg-white rounded-lg px-4 py-2 border border-gray-200">
-              <div className="text-sm text-gray-500">RIF Balance</div>
+              <div className="text-sm text-gray-500">ETH Balance</div>
               <div className="font-semibold text-gray-900">
-                {parseFloat(rifBalance).toFixed(4)} RIF
+                {parseFloat(ethBalance).toFixed(6)} ETH
               </div>
             </div>
             
@@ -161,9 +177,9 @@ export default function ContestsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900">
-                  {contests.reduce((sum, c) => sum + parseFloat(c.totalPrizePoolFormatted), 0).toFixed(2)}
+                  {contests.reduce((sum, c) => sum + parseFloat(c.totalPrizePoolFormatted), 0).toFixed(6)}
                 </div>
-                <div className="text-sm text-gray-500">Total Prize Pool (RIF)</div>
+                <div className="text-sm text-gray-500">Total Prize Pool (ETH)</div>
               </div>
             </div>
           </motion.div>

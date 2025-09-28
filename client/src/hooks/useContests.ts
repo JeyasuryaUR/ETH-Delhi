@@ -40,7 +40,7 @@ export function useContests() {
             const isParticipant = await poolContract.isParticipant(contestId, poolContract.address!);
             
             const participantStake = poolContract.calculateParticipantStake(
-              formatUnits(details.initialPrizePool, RIF_TOKEN.DECIMALS)
+              formatUnits(details.initialPrizePool, 18) // ETH has 18 decimals
             );
 
             return {
@@ -53,8 +53,8 @@ export function useContests() {
               isActive: details.isActive,
               isEnded: details.isEnded,
               participantStake,
-              totalPrizePoolFormatted: formatUnits(details.totalPrizePool, RIF_TOKEN.DECIMALS),
-              initialPrizePoolFormatted: formatUnits(details.initialPrizePool, RIF_TOKEN.DECIMALS),
+              totalPrizePoolFormatted: formatUnits(details.totalPrizePool, 18), // ETH has 18 decimals
+              initialPrizePoolFormatted: formatUnits(details.initialPrizePool, 18), // ETH has 18 decimals
               participantCountFormatted: details.participantCount.toString(),
               maxParticipantsFormatted: details.maxParticipants.toString(),
               isParticipant,
@@ -131,6 +131,19 @@ export function useContests() {
     }
   }, [poolContract, fetchContests]);
 
+  // Get ETH balance
+  const getETHBalance = useCallback(async () => {
+    if (!poolContract.isConnected || !poolContract.address) return '0';
+
+    try {
+      const balance = await poolContract.getETHBalance(poolContract.address);
+      return formatUnits(balance, 18); // ETH has 18 decimals
+    } catch (error) {
+      console.error('Error getting ETH balance:', error);
+      return '0';
+    }
+  }, [poolContract]);
+
   // Get RIF balance
   const getRIFBalance = useCallback(async () => {
     if (!poolContract.isConnected || !poolContract.address) return '0';
@@ -177,7 +190,7 @@ export function useContests() {
     if (poolContract.isConnected) {
       fetchContests();
     }
-  }, [poolContract.isConnected, fetchContests]);
+  }, [poolContract.isConnected]); // Remove fetchContests from dependencies to prevent infinite loop
 
   return {
     contests,
@@ -186,6 +199,7 @@ export function useContests() {
     createContest,
     joinContest,
     endContest,
+    getETHBalance,
     getRIFBalance,
     getRIFAllowance,
     approveRIF,

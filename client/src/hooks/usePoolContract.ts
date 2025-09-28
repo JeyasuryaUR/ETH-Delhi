@@ -31,6 +31,21 @@ export function usePoolContract() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
+  // Get ETH balance for an address
+  const getETHBalance = async (address: string): Promise<bigint> => {
+    if (!publicClient) throw new Error('Public client not available');
+    
+    try {
+      const balance = await publicClient.getBalance({
+        address: address as `0x${string}`,
+      });
+      return balance;
+    } catch (error) {
+      console.error('Error getting ETH balance:', error);
+      throw error;
+    }
+  };
+
   // Get RIF token balance for an address
   const getRIFBalance = async (address: string): Promise<bigint> => {
     if (!publicClient) throw new Error('Public client not available');
@@ -96,19 +111,16 @@ export function usePoolContract() {
     if (!walletClient || !address || !publicClient) throw new Error('Wallet client not available');
     
     try {
-      // Convert prize pool amount to wei
-      const prizePoolWei = parseUnits(prizePoolAmount, RIF_TOKEN.DECIMALS);
-      
-      // First, approve the Pool contract to spend RIF tokens
-      await approveRIF(prizePoolWei);
+      // Convert prize pool amount to wei (ETH, not RIF)
+      const prizePoolWei = parseUnits(prizePoolAmount, 18); // ETH has 18 decimals
 
-      // Create the contest
+      // Create the contest with ETH payment
       const hash = await writeContract(walletClient, {
         address: CONTRACTS.POOL.ADDRESS as `0x${string}`,
         abi: CONTRACTS.POOL.ABI,
         functionName: 'createContest',
         args: [BigInt(maxParticipants)],
-        value: prizePoolWei, // This is the initial prize pool stake
+        value: prizePoolWei, // This is the initial prize pool stake in ETH
         account: address,
       });
 
@@ -130,16 +142,13 @@ export function usePoolContract() {
       const contestDetails = await getContestDetails(contestId);
       const stakingAmount = contestDetails.stakingAmount;
 
-      // First, approve the Pool contract to spend RIF tokens
-      await approveRIF(stakingAmount);
-
-      // Join the contest
+      // Join the contest with ETH payment (1% of initial prize pool)
       const hash = await writeContract(walletClient, {
         address: CONTRACTS.POOL.ADDRESS as `0x${string}`,
         abi: CONTRACTS.POOL.ABI,
         functionName: 'joinContest',
         args: [contestId],
-        value: stakingAmount,
+        value: stakingAmount, // This is 1% of initial prize pool in ETH
         account: address,
       });
 
@@ -280,9 +289,9 @@ export function usePoolContract() {
 
   // Calculate participant staking amount (1% of prize pool)
   const calculateParticipantStake = (prizePoolAmount: string): string => {
-    const prizePoolWei = parseUnits(prizePoolAmount, RIF_TOKEN.DECIMALS);
+    const prizePoolWei = parseUnits(prizePoolAmount, 18); // ETH has 18 decimals
     const stakeWei = (prizePoolWei * BigInt(CONTEST_CONFIG.PARTICIPANT_STAKE_PERCENTAGE)) / BigInt(100);
-    return formatUnits(stakeWei, RIF_TOKEN.DECIMALS);
+    return formatUnits(stakeWei, 18); // ETH has 18 decimals
   };
 
   // Calculate organizer reward (10% of total prize pool)
@@ -305,6 +314,7 @@ export function usePoolContract() {
   return {
     isConnected,
     address,
+    getETHBalance,
     getRIFBalance,
     getRIFAllowance,
     approveRIF,
