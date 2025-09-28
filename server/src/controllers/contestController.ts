@@ -918,14 +918,26 @@ export const completeSwissTournament = async (req: Request, res: Response) => {
       });
     }
 
-    // Complete the tournament
+    console.log(`🏁 Starting tournament completion for contest: ${contestId}`);
+
+    // Complete the tournament (this will also identify and mint NFT for canonical game)
     await SwissTournamentService.completeSwissTournament(contestId);
+
+    // Get the canonical game ID for response
+    const canonicalGameId = await SwissTournamentService.identifyAndLogCanonicalGame(contestId);
+
+    console.log(`🏆 Tournament ${contestId} completed successfully!`);
+    if (canonicalGameId) {
+      console.log(`🎯 Canonical game NFT process initiated for game: ${canonicalGameId}`);
+    }
 
     return res.status(200).json({
       success: true,
       message: 'Swiss tournament completed successfully',
       data: {
-        contestId
+        contestId,
+        canonicalGameId: canonicalGameId || null,
+        nftMinted: !!canonicalGameId
       }
     });
   } catch (err: any) {

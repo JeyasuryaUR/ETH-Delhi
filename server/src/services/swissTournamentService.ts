@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma';
+import { NFTService } from './nftService';
 
 export interface Player {
   id: string;
@@ -676,8 +677,151 @@ export class SwissTournamentService {
       }
     });
 
+    // GET THE LATEST GAME OF HIGHEST POINTS USER OF THE TOURNAMENT
+    const canonicalGameId = await this.identifyAndLogCanonicalGame(contestId);
+    
+    // Mint NFT for the canonical game if found
+    if (canonicalGameId) {
+      console.log('\n🎯 STARTING CANONICAL GAME NFT MINTING...');
+      await NFTService.mintCanonicalGameNFT(canonicalGameId);
+    } else {
+      console.log('⚠️  No canonical game found for NFT minting');
+    }
+
     // Calculate and update final ratings for all participants
     await this.updateFinalRatings(contestId);
+  }
+
+  /**
+   * Identify and log the canonical game (highest-scored player's last round game)
+   */
+  static async identifyAndLogCanonicalGame(contestId: string): Promise<string | null> {
+    try {
+      // Get all participants sorted by score (descending) and tiebreaks
+      const participants = await prisma.contest_participants.findMany({
+        where: { contest_id: contestId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              display_name: true,
+              wallet_address: true
+            }
+          }
+        },
+        orderBy: [
+          { score: 'desc' },
+          { buchholz_score: 'desc' },
+          { sonneborn_berger: 'desc' },
+          { rating_at_start: 'desc' }
+        ]
+      });
+
+      if (participants.length === 0) {
+        console.log('🏆 No participants found for canonical game identification');
+        return null;
+      }
+
+      const highestScoredPlayer = participants[0];
+      console.log(`🏆 Highest scored player: ${highestScoredPlayer.user.username} (${highestScoredPlayer.user.display_name || 'No display name'}) with score: ${highestScoredPlayer.score}`);
+
+      // Get contest details to find the last round number
+      const contest = await prisma.contests.findUnique({
+        where: { id: contestId },
+        select: { total_rounds: true, current_round: true }
+      });
+
+      const lastRoundNumber = contest?.total_rounds || contest?.current_round || 1;
+
+      // Get the highest-scored player's last round game
+      const canonicalGame = await prisma.games.findFirst({
+        where: {
+          contest_id: contestId,
+          round_number: lastRoundNumber,
+          OR: [
+            { white_id: highestScoredPlayer.user_id },
+            { black_id: highestScoredPlayer.user_id }
+          ],
+          result: { not: null } // Ensure the game was completed
+        },
+        include: {
+          white: {
+            select: {
+              id: true,
+              username: true,
+              display_name: true,
+              wallet_address: true
+            }
+          },
+          black: {
+            select: {
+              id: true,
+              username: true,
+              display_name: true,
+              wallet_address: true
+            }
+          },
+          winner: {
+            select: {
+              id: true,
+              username: true,
+              display_name: true
+            }
+          }
+        }
+      });
+
+      if (canonicalGame) {
+        console.log('🎯 CANONICAL GAME IDENTIFIED FOR NFT MINTING:');
+        console.log(`   Game ID: ${canonicalGame.id}`);
+        console.log(`   Round: ${canonicalGame.round_number} (Last Round)`);
+        console.log(`   White Player: ${canonicalGame.white?.username} (${canonicalGame.white?.display_name || 'No display name'})`);
+        console.log(`   Black Player: ${canonicalGame.black?.username} (${canonicalGame.black?.display_name || 'No display name'})`);
+        console.log(`   Winner: ${canonicalGame.winner?.username || 'Draw/No result'} (${canonicalGame.winner?.display_name || 'N/A'})`);
+        console.log(`   Result: ${canonicalGame.result}`);
+        console.log(`   Game Duration: ${canonicalGame.created_at} - ${canonicalGame.ended_at}`);
+        console.log(`   PGN: ${canonicalGame.pgn || 'Not recorded'}`);
+        console.log('   🚀 Ready for NFT minting process!');
+        
+        return canonicalGame.id;
+      } else {
+        console.log(`⚠️  No completed game found for highest scored player ${highestScoredPlayer.user.username} in round ${lastRoundNumber}`);
+        
+        // Fallback: Try to find any game from the highest-scored player in the tournament
+        const anyGameByTopPlayer = await prisma.games.findFirst({
+          where: {
+            contest_id: contestId,
+            OR: [
+              { white_id: highestScoredPlayer.user_id },
+              { black_id: highestScoredPlayer.user_id }
+            ],
+            result: { not: null }
+          },
+          include: {
+            white: { select: { username: true, display_name: true } },
+            black: { select: { username: true, display_name: true } },
+            winner: { select: { username: true, display_name: true } }
+          },
+          orderBy: {
+            round_number: 'desc' // Get the most recent game
+          }
+        });
+
+        if (anyGameByTopPlayer) {
+          console.log('🎯 FALLBACK CANONICAL GAME IDENTIFIED FOR NFT MINTING:');
+          console.log(`   Game ID: ${anyGameByTopPlayer.id}`);
+          console.log(`   Round: ${anyGameByTopPlayer.round_number}`);
+          console.log(`   Note: Using most recent completed game by top player`);
+          return anyGameByTopPlayer.id;
+        }
+        
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ Error identifying canonical game:', error);
+      return null;
+    }
   }
 
   /**

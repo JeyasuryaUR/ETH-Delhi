@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createConfig, http, WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia } from "viem/chains";
-import { defineChain } from 'viem';
+import { defineChain } from "viem"; 
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { API_BASE } from "@/lib/config";
 import { Toaster } from "react-hot-toast";

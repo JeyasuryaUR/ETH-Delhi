@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import userRoutes from "./routes/userRoutes";
 import contestRoutes from "./routes/contestRoutes";
+import nftRoutes from "./routes/nftRoutes";
 import { initializeChessSocket } from "./socket/chessSocket";
 import ratingRouter from "./routes/ratingRoutes";
 
@@ -31,6 +32,7 @@ app.use(express.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/contests", contestRoutes);
+app.use("/api/nft", nftRoutes);
 app.use("/api/ratings", ratingRouter);
 
 app.get("/", (_req, res) => {

@@ -1,4 +1,5 @@
-import { writeContract, readContract, waitForTransactionReceipt } from 'viem';
+import { writeContract, readContract, waitForTransactionReceipt } from 'viem/actions';
+// import { writeContract } from 'viem/actions';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { CONTRACTS, RIF_TOKEN, CONTEST_CONFIG } from '@/lib/contracts';
 import { parseUnits, formatUnits } from 'viem';
@@ -78,6 +79,7 @@ export class PoolService {
         functionName: 'approve',
         args: [CONTRACTS.POOL.ADDRESS as `0x${string}`, amount],
         account: this.account.address,
+        chain: undefined
       });
 
       const receipt = await waitForTransactionReceipt(this.publicClient, {
@@ -108,6 +110,7 @@ export class PoolService {
         args: [BigInt(maxParticipants)],
         value: prizePoolWei, // This is the initial prize pool stake
         account: this.account.address,
+        chain: undefined
       });
 
       const receipt = await waitForTransactionReceipt(this.publicClient, {
@@ -139,6 +142,7 @@ export class PoolService {
         args: [contestId],
         value: stakingAmount,
         account: this.account.address,
+        chain: undefined
       });
 
       const receipt = await waitForTransactionReceipt(this.publicClient, {
@@ -161,6 +165,7 @@ export class PoolService {
         functionName: 'endContest',
         args: [contestId, winners.map(w => w as `0x${string}`)],
         account: this.account.address,
+        chain: undefined
       });
 
       const receipt = await waitForTransactionReceipt(this.publicClient, {
@@ -182,7 +187,7 @@ export class PoolService {
         abi: CONTRACTS.POOL.ABI,
         functionName: 'getContestDetails',
         args: [contestId],
-      });
+      }) as [string, bigint, bigint, bigint, bigint, boolean, boolean, bigint];
 
       return {
         organizer: details[0],
@@ -241,6 +246,7 @@ export class PoolService {
         address: CONTRACTS.POOL.ADDRESS as `0x${string}`,
         abi: CONTRACTS.POOL.ABI,
         functionName: 'contestCounter',
+        args: []
       });
 
       return counter as bigint;
@@ -257,6 +263,7 @@ export class PoolService {
         address: CONTRACTS.POOL.ADDRESS as `0x${string}`,
         abi: CONTRACTS.POOL.ABI,
         functionName: 'getContractBalance',
+        args: []
       });
 
       return balance as bigint;

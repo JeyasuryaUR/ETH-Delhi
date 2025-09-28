@@ -3,6 +3,7 @@ import { usePoolService } from '@/services/poolService';
 import { ContestDetails, ContestInfo } from '@/services/poolService';
 import { formatUnits, parseUnits } from 'viem';
 import { RIF_TOKEN, CONTRACTS } from '@/lib/contracts';
+import { useAccount } from 'wagmi';
 
 export interface ContestDisplayInfo extends ContestInfo {
   participantStake: string;
@@ -15,20 +16,21 @@ export interface ContestDisplayInfo extends ContestInfo {
 
 export function useContests() {
   const poolService = usePoolService();
+  const { address } = useAccount();
   const [contests, setContests] = useState<ContestDisplayInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch all contests
   const fetchContests = useCallback(async () => {
-    if (!poolService) return;
+    if (!poolService || !address) return;
 
     setLoading(true);
     setError(null);
 
     try {
       const contestCounter = await poolService.getContestCounter();
-      const contestPromises: Promise<ContestDisplayInfo>[] = [];
+      const contestPromises: Promise<ContestDisplayInfo | null>[] = [];
 
       // Fetch details for each contest
       for (let i = 0; i < Number(contestCounter); i++) {
@@ -37,7 +39,7 @@ export function useContests() {
         const contestPromise = (async () => {
           try {
             const details = await poolService.getContestDetails(contestId);
-            const isParticipant = await poolService.isParticipant(contestId, poolService.account.address);
+            const isParticipant = await poolService.isParticipant(contestId, address);
             
             const participantStake = poolService.calculateParticipantStake(
               formatUnits(details.initialPrizePool, RIF_TOKEN.DECIMALS)
@@ -78,7 +80,7 @@ export function useContests() {
     } finally {
       setLoading(false);
     }
-  }, [poolService]);
+  }, [poolService, address]);
 
   // Create a new contest
   const createContest = useCallback(async (prizePoolAmount: string, maxParticipants: number) => {
@@ -133,31 +135,31 @@ export function useContests() {
 
   // Get RIF balance
   const getRIFBalance = useCallback(async () => {
-    if (!poolService) return '0';
+    if (!poolService || !address) return '0';
 
     try {
-      const balance = await poolService.getRIFBalance(poolService.account.address);
+      const balance = await poolService.getRIFBalance(address);
       return formatUnits(balance, RIF_TOKEN.DECIMALS);
     } catch (error) {
       console.error('Error getting RIF balance:', error);
       return '0';
     }
-  }, [poolService]);
+  }, [poolService, address]);
 
   // Check RIF allowance
   const getRIFAllowance = useCallback(async () => {
-    if (!poolService) return BigInt(0);
+    if (!poolService || !address) return BigInt(0);
 
     try {
       return await poolService.getRIFAllowance(
-        poolService.account.address,
+        address,
         CONTRACTS.POOL.ADDRESS
       );
     } catch (error) {
       console.error('Error getting RIF allowance:', error);
       return BigInt(0);
     }
-  }, [poolService]);
+  }, [poolService, address]);
 
   // Approve RIF tokens
   const approveRIF = useCallback(async (amount: string) => {
